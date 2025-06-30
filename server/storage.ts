@@ -45,6 +45,7 @@ export class MemStorage implements IStorage {
       freelancerPhone: insertQuote.freelancerPhone || null,
       hourlyRate: insertQuote.hourlyRate,
       hoursPerDay: insertQuote.hoursPerDay,
+      currency: insertQuote.currency || "USD",
       tasks: insertQuote.tasks,
       subtotal: insertQuote.subtotal,
       tax: insertQuote.tax || 0,

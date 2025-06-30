@@ -30,6 +30,7 @@ export default function CalculatorPage() {
         freelancerPhone: calculator.state.freelancerInfo.phone,
         hourlyRate: Math.round(calculator.state.hourlyRate * 100), // Convert to cents
         hoursPerDay: calculator.state.hoursPerDay,
+        currency: calculator.state.currency,
         tasks: calculator.state.tasks,
         subtotal: Math.round(calculator.summary.subtotal * 100), // Convert to cents
         tax: Math.round(calculator.summary.tax * 100), // Convert to cents
@@ -119,12 +120,15 @@ export default function CalculatorPage() {
             <RateConfiguration
               hourlyRate={calculator.state.hourlyRate}
               hoursPerDay={calculator.state.hoursPerDay}
+              currency={calculator.state.currency}
               onHourlyRateChange={calculator.updateHourlyRate}
               onHoursPerDayChange={calculator.updateHoursPerDay}
+              onCurrencyChange={calculator.updateCurrency}
             />
             
             <TaskManagement
               tasks={calculator.state.tasks}
+              currency={calculator.state.currency}
               onAddTask={calculator.addTask}
               onUpdateTask={calculator.updateTask}
               onRemoveTask={calculator.removeTask}
@@ -136,6 +140,7 @@ export default function CalculatorPage() {
           <div className="space-y-6">
             <CostSummary
               summary={calculator.summary}
+              currency={calculator.state.currency}
               onExportPDF={handleExportPDF}
               onShare={handleShare}
             />
@@ -145,6 +150,7 @@ export default function CalculatorPage() {
               clientInfo={calculator.state.clientInfo}
               tasks={calculator.state.tasks}
               summary={calculator.summary}
+              currency={calculator.state.currency}
               terms={calculator.state.terms}
               onUpdateFreelancerInfo={calculator.updateFreelancerInfo}
               onUpdateClientInfo={calculator.updateClientInfo}

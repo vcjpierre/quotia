@@ -2,6 +2,7 @@ import { TrendingUp, FileText, Share } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { formatCurrency, type Currency } from "@/lib/currency";
 
 interface CostSummaryProps {
   summary: {
@@ -12,17 +13,12 @@ interface CostSummaryProps {
     total: number;
     hourlyRate: number;
   };
+  currency: Currency;
   onExportPDF: () => void;
   onShare: () => void;
 }
 
-export function CostSummary({ summary, onExportPDF, onShare }: CostSummaryProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
+export function CostSummary({ summary, currency, onExportPDF, onShare }: CostSummaryProps) {
 
   return (
     <Card className="sticky top-6">
@@ -54,7 +50,7 @@ export function CostSummary({ summary, onExportPDF, onShare }: CostSummaryProps)
           <div className="flex justify-between items-center py-2">
             <span className="text-slate-600 dark:text-slate-400">Hourly Rate</span>
             <span className="font-semibold text-slate-900 dark:text-white">
-              {formatCurrency(summary.hourlyRate)}/hr
+              {formatCurrency(summary.hourlyRate, currency)}/hr
             </span>
           </div>
           <Separator />
@@ -63,7 +59,7 @@ export function CostSummary({ summary, onExportPDF, onShare }: CostSummaryProps)
               Total Cost
             </span>
             <span className="text-2xl font-bold text-accent">
-              {formatCurrency(summary.total)}
+              {formatCurrency(summary.total, currency)}
             </span>
           </div>
         </div>

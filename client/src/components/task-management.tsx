@@ -5,9 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { type Task } from "@shared/schema";
+import { formatCurrency, type Currency } from "@/lib/currency";
 
 interface TaskManagementProps {
   tasks: Task[];
+  currency: Currency;
   onAddTask: (task: Omit<Task, "id" | "cost">) => void;
   onUpdateTask: (id: string, updates: Partial<Omit<Task, "id">>) => void;
   onRemoveTask: (id: string) => void;
@@ -16,6 +18,7 @@ interface TaskManagementProps {
 
 export function TaskManagement({
   tasks,
+  currency,
   onAddTask,
   onUpdateTask,
   onRemoveTask,
@@ -27,13 +30,6 @@ export function TaskManagement({
       type: "project",
       hours: 1,
     });
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
   };
 
   return (
@@ -109,7 +105,7 @@ export function TaskManagement({
                     <Label className="text-sm font-medium">Cost</Label>
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-lg font-semibold text-slate-900 dark:text-white">
-                        {formatCurrency(task.cost)}
+                        {formatCurrency(task.cost, currency)}
                       </span>
                       <Button
                         variant="ghost"

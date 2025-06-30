@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { type Task } from "@shared/schema";
+import { formatCurrency, type Currency } from "@/lib/currency";
 
 interface ReceiptPreviewProps {
   freelancerInfo: {
@@ -23,6 +24,7 @@ interface ReceiptPreviewProps {
     tax: number;
     total: number;
   };
+  currency: Currency;
   terms: string;
   onUpdateFreelancerInfo: (info: Partial<ReceiptPreviewProps["freelancerInfo"]>) => void;
   onUpdateClientInfo: (info: Partial<ReceiptPreviewProps["clientInfo"]>) => void;
@@ -34,17 +36,12 @@ export function ReceiptPreview({
   clientInfo,
   tasks,
   summary,
+  currency,
   terms,
   onUpdateFreelancerInfo,
   onUpdateClientInfo,
   onUpdateTerms,
 }: ReceiptPreviewProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
 
   const currentDate = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
@@ -159,10 +156,10 @@ export function ReceiptPreview({
                       {task.hours}
                     </td>
                     <td className="py-3 text-right text-slate-600 dark:text-slate-400">
-                      {formatCurrency(task.cost / task.hours)}
+                      {formatCurrency(task.cost / task.hours, currency)}
                     </td>
                     <td className="py-3 text-right font-semibold text-slate-900 dark:text-white">
-                      {formatCurrency(task.cost)}
+                      {formatCurrency(task.cost, currency)}
                     </td>
                   </tr>
                 ))}
@@ -182,18 +179,18 @@ export function ReceiptPreview({
           <div className="flex justify-between items-center mb-2">
             <span className="text-slate-600 dark:text-slate-400">Subtotal:</span>
             <span className="font-semibold text-slate-900 dark:text-white">
-              {formatCurrency(summary.subtotal)}
+              {formatCurrency(summary.subtotal, currency)}
             </span>
           </div>
           <div className="flex justify-between items-center mb-4">
             <span className="text-slate-600 dark:text-slate-400">Tax (0%):</span>
             <span className="font-semibold text-slate-900 dark:text-white">
-              {formatCurrency(summary.tax)}
+              {formatCurrency(summary.tax, currency)}
             </span>
           </div>
           <div className="flex justify-between items-center text-lg font-bold text-accent bg-accent/5 rounded-lg p-4">
             <span>Total:</span>
-            <span>{formatCurrency(summary.total)}</span>
+            <span>{formatCurrency(summary.total, currency)}</span>
           </div>
         </div>
 

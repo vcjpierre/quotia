@@ -1,10 +1,12 @@
 import { useState, useCallback, useMemo } from "react";
 import { type Task } from "@shared/schema";
+import { type Currency } from "@/lib/currency";
 import { nanoid } from "nanoid";
 
 export interface CalculatorState {
   hourlyRate: number;
   hoursPerDay: number;
+  currency: Currency;
   tasks: Task[];
   freelancerInfo: {
     name: string;
@@ -42,6 +44,7 @@ export function useCalculator() {
   const [state, setState] = useState<CalculatorState>({
     hourlyRate: 75,
     hoursPerDay: 8,
+    currency: "USD",
     tasks: [],
     freelancerInfo: defaultFreelancerInfo,
     clientInfo: defaultClientInfo,
@@ -101,6 +104,13 @@ export function useCalculator() {
     setState(prev => ({
       ...prev,
       hoursPerDay: hours,
+    }));
+  }, []);
+
+  const updateCurrency = useCallback((currency: Currency) => {
+    setState(prev => ({
+      ...prev,
+      currency,
     }));
   }, []);
 
@@ -180,6 +190,7 @@ export function useCalculator() {
     removeTask,
     updateHourlyRate,
     updateHoursPerDay,
+    updateCurrency,
     updateFreelancerInfo,
     updateClientInfo,
     updateTerms,

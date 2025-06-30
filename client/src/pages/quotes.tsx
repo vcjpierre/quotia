@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { type Quote, type Task } from "@shared/schema";
+import { formatCurrency, type Currency } from "@/lib/currency";
 
 export default function QuotesPage() {
   const { toast } = useToast();
@@ -41,11 +42,8 @@ export default function QuotesPage() {
     },
   });
 
-  const formatCurrency = (cents: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(cents / 100);
+  const formatCurrencyFromCents = (cents: number, currency: Currency = "USD") => {
+    return formatCurrency(cents / 100, currency);
   };
 
   const formatDate = (date: string | Date) => {
@@ -118,7 +116,7 @@ export default function QuotesPage() {
                         </p>
                       </div>
                       <Badge variant="secondary" className="bg-accent/10 text-accent">
-                        {formatCurrency(quote.total)}
+                        {formatCurrencyFromCents(quote.total, quote.currency as Currency)}
                       </Badge>
                     </div>
 
@@ -182,7 +180,7 @@ export default function QuotesPage() {
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
                           <span className="text-slate-600 dark:text-slate-400">Hourly Rate:</span>
-                          <span className="font-medium">{formatCurrency(selectedQuote.hourlyRate)}/hr</span>
+                          <span className="font-medium">{formatCurrencyFromCents(selectedQuote.hourlyRate, selectedQuote.currency as Currency)}/hr</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-slate-600 dark:text-slate-400">Hours per Day:</span>
@@ -217,7 +215,7 @@ export default function QuotesPage() {
                               </div>
                             </div>
                             <span className="text-sm font-semibold text-slate-900 dark:text-white">
-                              {formatCurrency(task.cost * 100)}
+                              {formatCurrency(task.cost, selectedQuote.currency as Currency)}
                             </span>
                           </div>
                         ))}
@@ -229,15 +227,15 @@ export default function QuotesPage() {
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
                           <span className="text-slate-600 dark:text-slate-400">Subtotal:</span>
-                          <span className="font-medium">{formatCurrency(selectedQuote.subtotal)}</span>
+                          <span className="font-medium">{formatCurrencyFromCents(selectedQuote.subtotal, selectedQuote.currency as Currency)}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-slate-600 dark:text-slate-400">Tax:</span>
-                          <span className="font-medium">{formatCurrency(selectedQuote.tax)}</span>
+                          <span className="font-medium">{formatCurrencyFromCents(selectedQuote.tax, selectedQuote.currency as Currency)}</span>
                         </div>
                         <div className="flex justify-between text-lg font-bold text-accent border-t border-slate-200 dark:border-slate-600 pt-2">
                           <span>Total:</span>
-                          <span>{formatCurrency(selectedQuote.total)}</span>
+                          <span>{formatCurrencyFromCents(selectedQuote.total, selectedQuote.currency as Currency)}</span>
                         </div>
                       </div>
                     </div>
