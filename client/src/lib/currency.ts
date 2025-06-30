@@ -13,6 +13,7 @@ export const CURRENCY_SYMBOLS: Record<Currency, string> = {
   BRL: "R$",
   INR: "₹",
   COP: "$",
+  BOB: "Bs",
 };
 
 export const CURRENCY_NAMES: Record<Currency, string> = {
@@ -26,6 +27,7 @@ export const CURRENCY_NAMES: Record<Currency, string> = {
   BRL: "Brazilian Real",
   INR: "Indian Rupee",
   COP: "Colombian Peso",
+  BOB: "Bolivian Boliviano",
 };
 
 export function formatCurrency(amount: number, currency: Currency = "USD"): string {
@@ -56,6 +58,7 @@ function getLocaleForCurrency(currency: Currency): string {
     BRL: "pt-BR",
     INR: "en-IN",
     COP: "es-CO",
+    BOB: "es-BO",
   };
   
   return localeMap[currency] || "en-US";

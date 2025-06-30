@@ -32,7 +32,7 @@ export const taskSchema = z.object({
   cost: z.number().min(0),
 });
 
-const supportedCurrencies = ["USD", "EUR", "GBP", "CAD", "AUD", "JPY", "MXN", "BRL", "INR", "COP"] as const;
+const supportedCurrencies = ["USD", "EUR", "GBP", "CAD", "AUD", "JPY", "MXN", "BRL", "INR", "COP", "BOB"] as const;
 
 export const currencySchema = z.enum(supportedCurrencies);
 

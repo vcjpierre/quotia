@@ -96,6 +96,8 @@ This is a modern full-stack freelance billing calculator application built with 
 ```
 Changelog:
 - June 30, 2025. Initial setup
+- June 30, 2025. Added multi-currency support with 11 international currencies
+- June 30, 2025. Added Bolivian Boliviano (BOB) currency support
 ```
 
 ## User Preferences
