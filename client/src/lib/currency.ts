@@ -17,17 +17,17 @@ export const CURRENCY_SYMBOLS: Record<Currency, string> = {
 };
 
 export const CURRENCY_NAMES: Record<Currency, string> = {
-  USD: "US Dollar",
+  USD: "Dólar estadounidense",
   EUR: "Euro",
-  GBP: "British Pound",
-  CAD: "Canadian Dollar",
-  AUD: "Australian Dollar",
-  JPY: "Japanese Yen",
-  MXN: "Mexican Peso",
-  BRL: "Brazilian Real",
-  INR: "Indian Rupee",
-  COP: "Colombian Peso",
-  BOB: "Bolivian Boliviano",
+  GBP: "Libra esterlina",
+  CAD: "Dólar canadiense",
+  AUD: "Dólar australiano",
+  JPY: "Yen japonés",
+  MXN: "Peso mexicano",
+  BRL: "Real brasileño",
+  INR: "Rupia india",
+  COP: "Peso colombiano",
+  BOB: "Boliviano",
 };
 
 export function formatCurrency(amount: number, currency: Currency = "USD"): string {

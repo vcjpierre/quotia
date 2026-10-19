@@ -1,37 +1,62 @@
-import { defineConfig } from "vite";
+import {
+  defineConfig,
+  loadEnv,
+  type ConfigEnv,
+  type UserConfig,
+} from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
-export default defineConfig({
-  plugins: [
-    react(),
-    runtimeErrorOverlay(),
-    ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer(),
-          ),
-        ]
-      : []),
-  ],
-  resolve: {
-    alias: {
-      "@": path.resolve(import.meta.dirname, "client", "src"),
-      "@shared": path.resolve(import.meta.dirname, "shared"),
-      "@assets": path.resolve(import.meta.dirname, "attached_assets"),
+const projectRoot = path.resolve(import.meta.dirname);
+
+export async function createViteConfig({
+  command,
+  mode,
+}: ConfigEnv): Promise<UserConfig> {
+  if (command === "build") {
+    const env = loadEnv(mode, projectRoot, "VITE_");
+
+    if (!env.VITE_NEON_AUTH_URL) {
+      throw new Error(
+        "VITE_NEON_AUTH_URL is required for a production build; set it in .env",
+      );
+    }
+  }
+
+  return {
+    plugins: [
+      react(),
+      runtimeErrorOverlay(),
+      ...(process.env.NODE_ENV !== "production" &&
+      process.env.REPL_ID !== undefined
+        ? [
+            await import("@replit/vite-plugin-cartographer").then((m) =>
+              m.cartographer(),
+            ),
+          ]
+        : []),
+    ],
+    resolve: {
+      alias: {
+        "@": path.resolve(projectRoot, "client", "src"),
+        "@shared": path.resolve(projectRoot, "shared"),
+        "@assets": path.resolve(projectRoot, "attached_assets"),
+      },
     },
-  },
-  root: path.resolve(import.meta.dirname, "client"),
-  build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
-    emptyOutDir: true,
-  },
-  server: {
-    fs: {
-      strict: true,
-      deny: ["**/.*"],
+    root: path.resolve(projectRoot, "client"),
+    envDir: projectRoot,
+    build: {
+      outDir: path.resolve(projectRoot, "dist/public"),
+      emptyOutDir: true,
     },
-  },
-});
+    server: {
+      fs: {
+        strict: true,
+        deny: ["**/.*"],
+      },
+    },
+  };
+}
+
+export default defineConfig(createViteConfig);

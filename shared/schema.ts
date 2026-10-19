@@ -1,9 +1,10 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const quotes = pgTable("quotes", {
   id: serial("id").primaryKey(),
+  ownerId: text("owner_id").notNull(),
   title: text("title").notNull(),
   clientName: text("client_name"),
   clientEmail: text("client_email"),
@@ -22,13 +23,15 @@ export const quotes = pgTable("quotes", {
   terms: text("terms"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  ownerIdIdx: index("quotes_owner_id_idx").on(table.ownerId),
+}));
 
 export const taskSchema = z.object({
   id: z.string(),
-  description: z.string().min(1, "Task description is required"),
+  description: z.string().min(1, "La descripción de la tarea es obligatoria"),
   type: z.enum(["project", "feature", "microtask"]),
-  hours: z.number().min(0.1, "Hours must be at least 0.1"),
+  hours: z.number().min(0.1, "Las horas deben ser al menos 0.1"),
   cost: z.number().min(0),
 });
 
@@ -38,18 +41,20 @@ export const currencySchema = z.enum(supportedCurrencies);
 
 export const insertQuoteSchema = createInsertSchema(quotes, {
   tasks: z.array(taskSchema),
-  hourlyRate: z.number().min(1, "Hourly rate must be at least 1"),
-  hoursPerDay: z.number().min(1, "Hours per day must be at least 1"),
+  hourlyRate: z.number().min(1, "La tarifa por hora debe ser al menos 1"),
+  hoursPerDay: z.number().min(1, "Las horas por día deben ser al menos 1"),
   currency: currencySchema.default("USD"),
   tax: z.number().default(0),
 }).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  ownerId: true,
 });
 
 export const SUPPORTED_CURRENCIES = supportedCurrencies;
 
 export type InsertQuote = z.infer<typeof insertQuoteSchema>;
+export type NewQuote = InsertQuote & { ownerId: string };
 export type Quote = typeof quotes.$inferSelect;
 export type Task = z.infer<typeof taskSchema>;

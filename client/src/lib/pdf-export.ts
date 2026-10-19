@@ -3,7 +3,7 @@ import html2pdf from "html2pdf.js";
 export async function exportToPDF(elementId: string, filename = "freelance-quote") {
   const element = document.getElementById(elementId);
   if (!element) {
-    throw new Error("Element not found for PDF export");
+    throw new Error("No se encontró el elemento para exportar a PDF");
   }
 
   const options = {
@@ -27,7 +27,7 @@ export async function exportToPDF(elementId: string, filename = "freelance-quote
     return true;
   } catch (error) {
     console.error("PDF export failed:", error);
-    throw new Error("Failed to export PDF");
+    throw new Error("No se pudo exportar el PDF");
   }
 }
 

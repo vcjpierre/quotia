@@ -1,27 +1,96 @@
+import { useEffect, useRef, useState } from "react";
 import { Save } from "lucide-react";
+import { useLocation, useSearch } from "wouter";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useCalculator } from "@/hooks/use-calculator";
+import { useAuth } from "@/lib/use-auth";
 import { Navigation } from "@/components/navigation";
 import { RateConfiguration } from "@/components/rate-configuration";
 import { TaskManagement } from "@/components/task-management";
 import { CostSummary } from "@/components/cost-summary";
 import { ReceiptPreview } from "@/components/receipt-preview";
 import { exportToPDF, generateShareableURL } from "@/lib/pdf-export";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { insertQuoteSchema } from "@shared/schema";
+import { apiRequest, getQueryFn } from "@/lib/queryClient";
+import { insertQuoteSchema, type Quote } from "@shared/schema";
 
 export default function CalculatorPage() {
   const { toast } = useToast();
   const calculator = useCalculator();
   const queryClient = useQueryClient();
+  const { isAuthenticated, isPending: isAuthPending } = useAuth();
+  const [currentPath, navigate] = useLocation();
+  const search = useSearch();
+
+  const quoteParam = new URLSearchParams(search).get("quote");
+  const parsedQuoteId =
+    quoteParam && /^\d+$/.test(quoteParam) ? Number(quoteParam) : null;
+  const quoteId =
+    parsedQuoteId !== null &&
+    Number.isSafeInteger(parsedQuoteId) &&
+    parsedQuoteId > 0
+      ? parsedQuoteId
+      : null;
+  const returnPath = search ? `${currentPath}?${search}` : currentPath;
+
+  const {
+    data: loadedQuote,
+    error: loadError,
+    isLoading: isQuoteLoading,
+    refetch: refetchQuote,
+  } = useQuery<Quote>({
+    queryKey: [`/api/quotes/${quoteId}`],
+    queryFn: getQueryFn<Quote>({ on401: "throw" }),
+    enabled: isAuthenticated && quoteId !== null,
+  });
+
+  const [loadedQuoteId, setLoadedQuoteId] = useState<number | null>(null);
+  const loadedQuoteIdRef = useRef<number | null>(null);
+  const quoteTitleRef = useRef<string | null>(null);
+  const loadErrorHandledRef = useRef(false);
+
+  const { loadQuote } = calculator;
+
+  useEffect(() => {
+    setLoadedQuoteId(null);
+    loadedQuoteIdRef.current = null;
+    quoteTitleRef.current = null;
+    loadErrorHandledRef.current = false;
+  }, [quoteId]);
+
+  useEffect(() => {
+    if (loadedQuote && loadedQuote.id !== loadedQuoteIdRef.current) {
+      loadQuote(loadedQuote);
+      quoteTitleRef.current = loadedQuote.title;
+      loadedQuoteIdRef.current = loadedQuote.id;
+      setLoadedQuoteId(loadedQuote.id);
+    }
+  }, [loadedQuote, loadQuote]);
+
+  useEffect(() => {
+    if (loadError && !loadErrorHandledRef.current) {
+      loadErrorHandledRef.current = true;
+      toast({
+        title: "No se pudo cargar el presupuesto",
+        description: "El presupuesto no existe o no tenés acceso.",
+        variant: "destructive",
+      });
+    }
+  }, [loadError, toast]);
+
+  const isEditRequested = quoteId !== null;
+  const isEditReady = isEditRequested && loadedQuoteId === quoteId;
+  const isEditUnavailable =
+    isEditRequested && isAuthenticated && !isQuoteLoading && !isEditReady;
 
   const saveQuoteMutation = useMutation({
     mutationFn: async () => {
       const quoteData = {
-        title: `Quote - ${new Date().toLocaleDateString()}`,
-        clientName: calculator.state.clientInfo.name || "Client",
+        title:
+          quoteTitleRef.current ??
+          `Presupuesto - ${new Date().toLocaleDateString()}`,
+        clientName: calculator.state.clientInfo.name || "Cliente",
         clientEmail: calculator.state.clientInfo.email,
         clientAddress: calculator.state.clientInfo.address,
         freelancerName: calculator.state.freelancerInfo.name,
@@ -39,36 +108,72 @@ export default function CalculatorPage() {
       };
 
       const validatedData = insertQuoteSchema.parse(quoteData);
-      const response = await apiRequest("POST", "/api/quotes", validatedData);
+      const isEditing = isEditReady;
+      const response = await apiRequest(
+        isEditing ? "PUT" : "POST",
+        isEditing ? `/api/quotes/${quoteId}` : "/api/quotes",
+        validatedData,
+      );
       return response.json();
     },
     onSuccess: (quote) => {
       queryClient.invalidateQueries({ queryKey: ["/api/quotes"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/quotes/${quote.id}`] });
       toast({
-        title: "Quote saved successfully!",
-        description: `Quote #${quote.id} has been saved.`,
+        title: isEditReady
+          ? "Presupuesto actualizado"
+          : "Presupuesto guardado",
+        description: isEditReady
+          ? "Los cambios se guardaron correctamente."
+          : `El presupuesto n.º ${quote.id} se guardó correctamente.`,
       });
     },
     onError: (error) => {
       toast({
-        title: "Failed to save quote",
+        title: "No se pudo guardar el presupuesto",
         description: error.message,
         variant: "destructive",
       });
     },
   });
 
+  const handleSave = () => {
+    if (isAuthPending) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      toast({
+        title: "Iniciá sesión para guardar el presupuesto",
+        description: "Tus presupuestos se guardan en tu cuenta.",
+      });
+      navigate(`/login?redirect=${encodeURIComponent(returnPath)}`);
+      return;
+    }
+
+    if (isEditRequested && !isEditReady) {
+      toast({
+        title: "No se pudo cargar el presupuesto",
+        description: "Verificá que exista y que tengas acceso antes de guardar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    saveQuoteMutation.mutate();
+  };
+
   const handleExportPDF = async () => {
     try {
       await exportToPDF("receipt-content", `freelance-quote-${Date.now()}`);
       toast({
-        title: "PDF exported successfully!",
-        description: "Your quote has been saved as a PDF file.",
+        title: "¡PDF exportado con éxito!",
+        description: "Tu presupuesto se guardó como archivo PDF.",
       });
     } catch (error) {
       toast({
-        title: "Export failed",
-        description: "Unable to export PDF. Please try again.",
+        title: "Error al exportar",
+        description: "No se pudo exportar el PDF. Inténtalo de nuevo.",
         variant: "destructive",
       });
     }
@@ -78,35 +183,78 @@ export default function CalculatorPage() {
     const url = generateShareableURL();
     navigator.clipboard.writeText(url).then(() => {
       toast({
-        title: "Link copied!",
-        description: "Shareable link has been copied to clipboard.",
+        title: "¡Enlace copiado!",
+        description: "El enlace para compartir se copió al portapapeles.",
       });
     }).catch(() => {
       toast({
-        title: "Share link",
+        title: "Compartir enlace",
         description: url,
       });
     });
   };
 
+  const isSaveDisabled =
+    isAuthPending ||
+    saveQuoteMutation.isPending ||
+    (isEditRequested && isAuthenticated && (!isEditReady || isQuoteLoading));
+
+  const saveButtonLabel = saveQuoteMutation.isPending
+    ? "Guardando..."
+    : isEditReady
+      ? "Actualizar presupuesto"
+      : isEditRequested && isAuthenticated
+        ? isQuoteLoading
+          ? "Cargando presupuesto..."
+          : "Edición no disponible"
+        : "Guardar presupuesto";
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
       <Navigation />
-      
+
+      {isEditUnavailable ? (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+            <p className="font-medium">
+              No se pudo cargar el presupuesto para editar.
+            </p>
+            <p className="mt-1">
+              Verificá que exista y que tengas acceso, o volvé a la lista de
+              presupuestos.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void refetchQuote()}
+              >
+                Reintentar
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/quotes")}
+              >
+                Volver a presupuestos
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {/* Save Quote Button */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex justify-end">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => saveQuoteMutation.mutate()}
-            disabled={saveQuoteMutation.isPending}
+            onClick={handleSave}
+            disabled={isSaveDisabled}
             className="flex items-center space-x-2"
           >
             <Save className="h-4 w-4" />
-            <span className="hidden sm:inline">
-              {saveQuoteMutation.isPending ? "Saving..." : "Save Quote"}
-            </span>
+            <span className="hidden sm:inline">{saveButtonLabel}</span>
           </Button>
         </div>
       </div>
@@ -114,7 +262,7 @@ export default function CalculatorPage() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          
+
           {/* Left Side - Input Forms */}
           <div className="xl:col-span-2 space-y-6">
             <RateConfiguration
@@ -125,7 +273,7 @@ export default function CalculatorPage() {
               onHoursPerDayChange={calculator.updateHoursPerDay}
               onCurrencyChange={calculator.updateCurrency}
             />
-            
+
             <TaskManagement
               tasks={calculator.state.tasks}
               currency={calculator.state.currency}
@@ -144,7 +292,7 @@ export default function CalculatorPage() {
               onExportPDF={handleExportPDF}
               onShare={handleShare}
             />
-            
+
             <ReceiptPreview
               freelancerInfo={calculator.state.freelancerInfo}
               clientInfo={calculator.state.clientInfo}

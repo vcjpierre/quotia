@@ -26,7 +26,7 @@ export function TaskManagement({
 }: TaskManagementProps) {
   const handleAddTask = () => {
     onAddTask({
-      description: "New Task",
+      description: "Nueva tarea",
       type: "project",
       hours: 1,
     });
@@ -41,12 +41,12 @@ export function TaskManagement({
               <div className="bg-accent/10 text-accent rounded-lg p-2">
                 <ListChecks className="h-5 w-5" />
               </div>
-              <span>Project Tasks</span>
+              <span>Tareas del proyecto</span>
             </CardTitle>
             
             <Button onClick={handleAddTask} className="flex items-center space-x-2">
               <Plus className="h-4 w-4" />
-              <span>Add Task</span>
+              <span>Agregar tarea</span>
             </Button>
           </div>
         </CardHeader>
@@ -59,7 +59,7 @@ export function TaskManagement({
               >
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
                   <div className="lg:col-span-4">
-                    <Label className="text-sm font-medium">Task Description</Label>
+                    <Label className="text-sm font-medium">Descripción de la tarea</Label>
                     <Input
                       value={task.description}
                       onChange={(e) => onUpdateTask(task.id, { description: e.target.value })}
@@ -68,7 +68,7 @@ export function TaskManagement({
                   </div>
                   
                   <div className="lg:col-span-2">
-                    <Label className="text-sm font-medium">Type</Label>
+                    <Label className="text-sm font-medium">Tipo</Label>
                     <Select
                       value={task.type}
                       onValueChange={(value: "project" | "feature" | "microtask") =>
@@ -79,15 +79,15 @@ export function TaskManagement({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="project">Full Project</SelectItem>
-                        <SelectItem value="feature">Extra Feature</SelectItem>
-                        <SelectItem value="microtask">Microtask</SelectItem>
+                        <SelectItem value="project">Proyecto completo</SelectItem>
+                        <SelectItem value="feature">Funcionalidad extra</SelectItem>
+                        <SelectItem value="microtask">Microtarea</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   
                   <div className="lg:col-span-2">
-                    <Label className="text-sm font-medium">Duration</Label>
+                    <Label className="text-sm font-medium">Duración</Label>
                     <div className="flex items-center space-x-2 mt-2">
                       <Input
                         type="number"
@@ -97,12 +97,12 @@ export function TaskManagement({
                         onChange={(e) => onUpdateTask(task.id, { hours: Number(e.target.value) })}
                         className="text-sm"
                       />
-                      <span className="text-xs text-slate-500 dark:text-slate-400">hrs</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">h</span>
                     </div>
                   </div>
                   
                   <div className="lg:col-span-3">
-                    <Label className="text-sm font-medium">Cost</Label>
+                    <Label className="text-sm font-medium">Costo</Label>
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-lg font-semibold text-slate-900 dark:text-white">
                         {formatCurrency(task.cost, currency)}
@@ -124,7 +124,7 @@ export function TaskManagement({
             {tasks.length === 0 && (
               <div className="text-center py-8 text-slate-500 dark:text-slate-400">
                 <ListChecks className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No tasks added yet. Click "Add Task" to get started.</p>
+                <p>Aún no hay tareas. Haz clic en "Agregar tarea" para empezar.</p>
               </div>
             )}
           </div>
@@ -134,7 +134,7 @@ export function TaskManagement({
       {/* Quick Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
+          <CardTitle>Acciones rápidas</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -144,7 +144,7 @@ export function TaskManagement({
               className="flex items-center space-x-3 p-4 h-auto bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30"
             >
               <Globe className="h-5 w-5" />
-              <span className="font-medium">Website Project</span>
+              <span className="font-medium">Proyecto web</span>
             </Button>
             <Button
               variant="outline"
@@ -152,7 +152,7 @@ export function TaskManagement({
               className="flex items-center space-x-3 p-4 h-auto bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/30"
             >
               <Smartphone className="h-5 w-5" />
-              <span className="font-medium">Mobile App</span>
+              <span className="font-medium">App móvil</span>
             </Button>
             <Button
               variant="outline"
@@ -160,7 +160,7 @@ export function TaskManagement({
               className="flex items-center space-x-3 p-4 h-auto bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/30"
             >
               <Lightbulb className="h-5 w-5" />
-              <span className="font-medium">Consulting</span>
+              <span className="font-medium">Consultoría</span>
             </Button>
           </div>
         </CardContent>

@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
-import { type Task } from "@shared/schema";
+import { type Quote, type Task } from "@shared/schema";
 import { type Currency } from "@/lib/currency";
 import { nanoid } from "nanoid";
 
@@ -23,9 +23,9 @@ export interface CalculatorState {
 }
 
 const defaultFreelancerInfo = {
-  name: "Your Name",
-  title: "Full-Stack Developer",
-  email: "your.email@example.com",
+  name: "Tu nombre",
+  title: "Desarrollador Full-Stack",
+  email: "tu.correo@ejemplo.com",
   phone: "+1 (555) 123-4567",
 };
 
@@ -35,10 +35,10 @@ const defaultClientInfo = {
   address: "",
 };
 
-const defaultTerms = `• 50% deposit required to begin work
-• Remaining balance due upon project completion
-• Payment terms: Net 30 days
-• Quote valid for 30 days from issue date`;
+const defaultTerms = `• Se requiere un anticipo del 50% para comenzar el trabajo
+• El saldo restante se abona al finalizar el proyecto
+• Condiciones de pago: 30 días netos
+• El presupuesto es válido por 30 días desde la fecha de emisión`;
 
 export function useCalculator() {
   const [state, setState] = useState<CalculatorState>({
@@ -138,20 +138,20 @@ export function useCalculator() {
   const loadTemplate = useCallback((template: "website" | "mobile" | "consulting") => {
     const templates = {
       website: [
-        { description: "Website Design & Development", type: "project" as const, hours: 80 },
-        { description: "Content Management System", type: "feature" as const, hours: 20 },
-        { description: "SEO Optimization", type: "feature" as const, hours: 10 },
-        { description: "Testing & Bug Fixes", type: "microtask" as const, hours: 8 },
+        { description: "Diseño y desarrollo de sitio web", type: "project" as const, hours: 80 },
+        { description: "Sistema de gestión de contenidos", type: "feature" as const, hours: 20 },
+        { description: "Optimización SEO", type: "feature" as const, hours: 10 },
+        { description: "Pruebas y corrección de errores", type: "microtask" as const, hours: 8 },
       ],
       mobile: [
-        { description: "Mobile App Development", type: "project" as const, hours: 120 },
-        { description: "Push Notifications", type: "feature" as const, hours: 15 },
-        { description: "App Store Submission", type: "microtask" as const, hours: 5 },
+        { description: "Desarrollo de aplicación móvil", type: "project" as const, hours: 120 },
+        { description: "Notificaciones push", type: "feature" as const, hours: 15 },
+        { description: "Publicación en la tienda de aplicaciones", type: "microtask" as const, hours: 5 },
       ],
       consulting: [
-        { description: "Technical Consultation", type: "project" as const, hours: 40 },
-        { description: "Code Review", type: "feature" as const, hours: 10 },
-        { description: "Documentation", type: "microtask" as const, hours: 8 },
+        { description: "Consultoría técnica", type: "project" as const, hours: 40 },
+        { description: "Revisión de código", type: "feature" as const, hours: 10 },
+        { description: "Documentación", type: "microtask" as const, hours: 8 },
       ],
     };
 
@@ -163,6 +163,27 @@ export function useCalculator() {
         cost: task.hours * prev.hourlyRate,
       })),
     }));
+  }, []);
+
+  const loadQuote = useCallback((quote: Quote) => {
+    setState({
+      hourlyRate: quote.hourlyRate / 100,
+      hoursPerDay: quote.hoursPerDay,
+      currency: quote.currency as Currency,
+      tasks: Array.isArray(quote.tasks) ? (quote.tasks as Task[]) : [],
+      freelancerInfo: {
+        name: quote.freelancerName,
+        title: quote.freelancerTitle ?? "",
+        email: quote.freelancerEmail ?? "",
+        phone: quote.freelancerPhone ?? "",
+      },
+      clientInfo: {
+        name: quote.clientName ?? "",
+        email: quote.clientEmail ?? "",
+        address: quote.clientAddress ?? "",
+      },
+      terms: quote.terms ?? defaultTerms,
+    });
   }, []);
 
   const summary = useMemo(() => {
@@ -195,5 +216,6 @@ export function useCalculator() {
     updateClientInfo,
     updateTerms,
     loadTemplate,
+    loadQuote,
   };
 }

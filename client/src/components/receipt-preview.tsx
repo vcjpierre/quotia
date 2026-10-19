@@ -43,7 +43,7 @@ export function ReceiptPreview({
   onUpdateTerms,
 }: ReceiptPreviewProps) {
 
-  const currentDate = new Date().toLocaleDateString('en-US', {
+  const currentDate = new Date().toLocaleDateString('es-ES', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
@@ -54,7 +54,7 @@ export function ReceiptPreview({
   return (
     <Card className="overflow-hidden">
       <CardHeader className="bg-slate-50 dark:bg-slate-700 border-b border-slate-200 dark:border-slate-600">
-        <CardTitle>Receipt Preview</CardTitle>
+        <CardTitle>Vista previa del recibo</CardTitle>
       </CardHeader>
       
       <CardContent id="receipt-content" className="p-6 bg-white dark:bg-slate-800">
@@ -69,13 +69,13 @@ export function ReceiptPreview({
                 value={freelancerInfo.name}
                 onChange={(e) => onUpdateFreelancerInfo({ name: e.target.value })}
                 className="text-2xl font-bold border-none p-0 h-auto bg-transparent"
-                placeholder="Your Name"
+                placeholder="Tu nombre"
               />
               <Input
                 value={freelancerInfo.title}
                 onChange={(e) => onUpdateFreelancerInfo({ title: e.target.value })}
                 className="text-slate-600 dark:text-slate-400 border-none p-0 h-auto bg-transparent"
-                placeholder="Your Title"
+                placeholder="Tu cargo"
               />
             </div>
           </div>
@@ -84,7 +84,7 @@ export function ReceiptPreview({
               value={freelancerInfo.email}
               onChange={(e) => onUpdateFreelancerInfo({ email: e.target.value })}
               className="text-center border-none p-0 h-auto bg-transparent"
-              placeholder="your.email@example.com"
+              placeholder="tu.correo@ejemplo.com"
             />
             <Input
               value={freelancerInfo.phone}
@@ -97,19 +97,19 @@ export function ReceiptPreview({
 
         {/* Client Info */}
         <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-700 rounded-lg">
-          <h4 className="font-semibold text-slate-900 dark:text-white mb-2">Bill To:</h4>
+          <h4 className="font-semibold text-slate-900 dark:text-white mb-2">Facturar a:</h4>
           <div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
             <Input
               value={clientInfo.name}
               onChange={(e) => onUpdateClientInfo({ name: e.target.value })}
               className="font-medium text-slate-900 dark:text-white border-none p-0 h-auto bg-transparent"
-              placeholder="Client Name"
+              placeholder="Nombre del cliente"
             />
             <Textarea
               value={clientInfo.address}
               onChange={(e) => onUpdateClientInfo({ address: e.target.value })}
               className="border-none p-0 bg-transparent resize-none"
-              placeholder="Client Address"
+              placeholder="Dirección del cliente"
               rows={2}
             />
           </div>
@@ -118,10 +118,10 @@ export function ReceiptPreview({
         {/* Quote Details */}
         <div className="mb-6">
           <div className="flex justify-between items-center mb-4">
-            <h4 className="font-semibold text-slate-900 dark:text-white">Quote Details</h4>
+            <h4 className="font-semibold text-slate-900 dark:text-white">Detalles del presupuesto</h4>
             <div className="text-right text-sm text-slate-500">
-              <p>Quote #: <span>{quoteNumber}</span></p>
-              <p>Date: <span>{currentDate}</span></p>
+              <p>Presupuesto n.º: <span>{quoteNumber}</span></p>
+              <p>Fecha: <span>{currentDate}</span></p>
             </div>
           </div>
         </div>
@@ -133,16 +133,16 @@ export function ReceiptPreview({
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-600">
                   <th className="text-left py-3 font-semibold text-slate-900 dark:text-white">
-                    Description
+                    Descripción
                   </th>
                   <th className="text-right py-3 font-semibold text-slate-900 dark:text-white">
-                    Hours
+                    Horas
                   </th>
                   <th className="text-right py-3 font-semibold text-slate-900 dark:text-white">
-                    Rate
+                    Tarifa
                   </th>
                   <th className="text-right py-3 font-semibold text-slate-900 dark:text-white">
-                    Amount
+                    Importe
                   </th>
                 </tr>
               </thead>
@@ -169,7 +169,7 @@ export function ReceiptPreview({
 
           {tasks.length === 0 && (
             <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-              <p>No tasks added yet.</p>
+              <p>Aún no hay tareas agregadas.</p>
             </div>
           )}
         </div>
@@ -183,7 +183,7 @@ export function ReceiptPreview({
             </span>
           </div>
           <div className="flex justify-between items-center mb-4">
-            <span className="text-slate-600 dark:text-slate-400">Tax (0%):</span>
+            <span className="text-slate-600 dark:text-slate-400">Impuestos (0%):</span>
             <span className="font-semibold text-slate-900 dark:text-white">
               {formatCurrency(summary.tax, currency)}
             </span>
@@ -197,13 +197,13 @@ export function ReceiptPreview({
         {/* Terms */}
         <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-600">
           <h4 className="font-semibold text-slate-900 dark:text-white mb-3">
-            Terms & Conditions
+            Términos y condiciones
           </h4>
           <Textarea
             value={terms}
             onChange={(e) => onUpdateTerms(e.target.value)}
             className="text-sm text-slate-600 dark:text-slate-400 bg-transparent border-none p-0 resize-none"
-            placeholder="Enter terms and conditions..."
+            placeholder="Ingresa los términos y condiciones..."
             rows={4}
           />
         </div>

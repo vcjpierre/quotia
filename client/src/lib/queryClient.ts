@@ -1,4 +1,73 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { authUrl } from "./auth-client";
+
+let cached: { token: string; expiresAt: number } | null = null;
+
+export function clearAuthToken(): void {
+  cached = null;
+}
+
+export async function getAuthToken(force = false): Promise<string | null> {
+  if (!force && cached && cached.expiresAt > Date.now() + 30_000) {
+    return cached.token;
+  }
+
+  if (!authUrl) {
+    return null;
+  }
+
+  try {
+    const res = await fetch(`${authUrl}/token`, { credentials: "include" });
+
+    if (!res.ok) {
+      console.warn(`[auth] token fetch failed (${res.status})`);
+      return null;
+    }
+
+    const data = await res.json();
+    if (typeof data?.token === "string") {
+      cached = { token: data.token, expiresAt: Date.now() + 10 * 60_000 };
+      return data.token;
+    }
+
+    console.warn("[auth] token fetch failed (invalid-payload)");
+  } catch {
+    console.warn("[auth] token fetch failed (network)");
+  }
+
+  return null;
+}
+
+function withAuthHeaders(
+  headers: Record<string, string>,
+  token: string | null,
+): Record<string, string> {
+  return token ? { ...headers, Authorization: `Bearer ${token}` } : headers;
+}
+
+async function fetchWithAuth(url: string, init: RequestInit): Promise<Response> {
+  const baseHeaders = (init.headers as Record<string, string> | undefined) ?? {};
+  const token = await getAuthToken();
+  const response = await fetch(url, {
+    ...init,
+    headers: withAuthHeaders(baseHeaders, token),
+  });
+
+  if (response.status !== 401) {
+    return response;
+  }
+
+  clearAuthToken();
+  const freshToken = await getAuthToken(true);
+  if (!freshToken) {
+    return response;
+  }
+
+  return fetch(url, {
+    ...init,
+    headers: withAuthHeaders(baseHeaders, freshToken),
+  });
+}
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -12,7 +81,7 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
+  const res = await fetchWithAuth(url, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
@@ -29,7 +98,7 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
+    const res = await fetchWithAuth(queryKey[0] as string, {
       credentials: "include",
     });
 

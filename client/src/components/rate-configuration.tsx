@@ -32,14 +32,14 @@ export function RateConfiguration({
           <div className="bg-primary/10 text-primary rounded-lg p-2">
             <DollarSign className="h-5 w-5" />
           </div>
-          <span>Rate Configuration</span>
+          <span>Configuración de tarifas</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <Label htmlFor="currency" className="text-sm font-medium">
-              Currency
+              Moneda
             </Label>
             <Select value={currency} onValueChange={onCurrencyChange}>
               <SelectTrigger className="mt-2">
@@ -64,7 +64,7 @@ export function RateConfiguration({
 
           <div>
             <Label htmlFor="hourlyRate" className="text-sm font-medium">
-              Hourly Rate ({currencySymbol})
+              Tarifa por hora ({currencySymbol})
             </Label>
             <div className="relative mt-2">
               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500">
@@ -85,7 +85,7 @@ export function RateConfiguration({
           
           <div>
             <Label htmlFor="hoursPerDay" className="text-sm font-medium">
-              Working Hours per Day
+              Horas de trabajo por día
             </Label>
             <Input
               id="hoursPerDay"

@@ -27,36 +27,36 @@ export function CostSummary({ summary, currency, onExportPDF, onShare }: CostSum
           <div className="bg-accent/10 text-accent rounded-lg p-2">
             <TrendingUp className="h-5 w-5" />
           </div>
-          <span>Cost Summary</span>
+          <span>Resumen de costos</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Summary Stats */}
         <div className="space-y-4">
           <div className="flex justify-between items-center py-2">
-            <span className="text-slate-600 dark:text-slate-400">Total Hours</span>
+            <span className="text-slate-600 dark:text-slate-400">Horas totales</span>
             <span className="font-semibold text-slate-900 dark:text-white">
-              {summary.totalHours} hrs
+              {summary.totalHours} h
             </span>
           </div>
           <Separator />
           <div className="flex justify-between items-center py-2">
-            <span className="text-slate-600 dark:text-slate-400">Total Days</span>
+            <span className="text-slate-600 dark:text-slate-400">Días totales</span>
             <span className="font-semibold text-slate-900 dark:text-white">
-              {summary.totalDays} days
+              {summary.totalDays} días
             </span>
           </div>
           <Separator />
           <div className="flex justify-between items-center py-2">
-            <span className="text-slate-600 dark:text-slate-400">Hourly Rate</span>
+            <span className="text-slate-600 dark:text-slate-400">Tarifa por hora</span>
             <span className="font-semibold text-slate-900 dark:text-white">
-              {formatCurrency(summary.hourlyRate, currency)}/hr
+              {formatCurrency(summary.hourlyRate, currency)}/h
             </span>
           </div>
           <Separator />
           <div className="flex justify-between items-center py-3 bg-accent/5 rounded-lg px-4">
             <span className="text-lg font-semibold text-slate-900 dark:text-white">
-              Total Cost
+              Costo total
             </span>
             <span className="text-2xl font-bold text-accent">
               {formatCurrency(summary.total, currency)}
@@ -71,7 +71,7 @@ export function CostSummary({ summary, currency, onExportPDF, onShare }: CostSum
             className="w-full flex items-center justify-center space-x-2 font-medium"
           >
             <FileText className="h-4 w-4" />
-            <span>Generate Receipt</span>
+            <span>Generar recibo</span>
           </Button>
           
           <div className="grid grid-cols-2 gap-3">
@@ -88,7 +88,7 @@ export function CostSummary({ summary, currency, onExportPDF, onShare }: CostSum
               className="flex items-center justify-center space-x-2 bg-green-500 hover:bg-green-600"
             >
               <Share className="h-4 w-4" />
-              <span className="text-sm">Share</span>
+              <span className="text-sm">Compartir</span>
             </Button>
           </div>
         </div>
