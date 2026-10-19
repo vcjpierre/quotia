@@ -111,16 +111,13 @@
     "bufferutil": "^4.0.8"
   },
   "allowScripts": {
-    "esbuild@0.18.20": true,
-    "esbuild@0.19.12": true,
-    "esbuild@0.25.0": true,
-    "esbuild@0.23.1": true,
     "esbuild@0.21.5": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.2": true,
     "bufferutil@4.0.8": true,
     "core-js@3.43.0": true
   },
   "description": "This is a modern full-stack freelance billing calculator application built with React, Express.js, and PostgreSQL. The application allows freelancers to create professional quotes, calculate project costs, and export PDF receipts. It features a clean, responsive UI built with shadcn/ui components and supports both light and dark themes.",
-  "main": "postcss.config.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vcjpierre/Freelance-Billing-Calculator.git"
