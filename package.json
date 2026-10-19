@@ -57,7 +57,7 @@
     "connect-pg-simple": "^10.0.0",
     "date-fns": "^3.6.0",
     "dotenv": "^18.0.8",
-    "drizzle-orm": "^0.39.1",
+    "drizzle-orm": "^0.45.4",
     "drizzle-zod": "^0.7.0",
     "embla-carousel-react": "^8.6.0",
     "express": "^4.21.2",
@@ -87,6 +87,17 @@
     "ws": "^8.18.0",
     "zod": "^3.24.2",
     "zod-validation-error": "^3.4.0"
+  },
+  "overrides": {
+    "better-auth": "1.7.11",
+    "better-call": "1.4.2",
+    "@neondatabase/auth-ui": {
+      "@daveyplate/better-auth-ui": {
+        "@better-auth/api-key": {
+          "better-call": "1.4.2"
+        }
+      }
+    }
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.15",
