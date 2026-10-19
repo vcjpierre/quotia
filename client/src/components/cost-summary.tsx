@@ -21,7 +21,7 @@ interface CostSummaryProps {
 export function CostSummary({ summary, currency, onExportPDF, onShare }: CostSummaryProps) {
 
   return (
-    <Card className="sticky top-6">
+    <Card className="top-6">
       <CardHeader>
         <CardTitle className="flex items-center space-x-3">
           <div className="bg-accent/10 text-accent rounded-lg p-2">
