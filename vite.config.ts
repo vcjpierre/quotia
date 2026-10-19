@@ -25,6 +25,14 @@ export async function createViteConfig({
 
   return {
     plugins: [react()],
+    preview: {
+      host: '0.0.0.0',
+      port: 5000,
+      strictPort: true,
+      allowedHosts: [
+        'freelance-billing-calculator.up.railway.app'
+      ],
+    },
     resolve: {
       alias: {
         "@": path.resolve(projectRoot, "client", "src"),
