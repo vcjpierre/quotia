@@ -18,6 +18,10 @@ function parseQuoteId(raw: string): number | null {
   return id;
 }
 
+// base64url of 32 random bytes: always 43 characters. Rejecting anything else
+// before touching the database keeps junk traffic off the public endpoint.
+const SHARE_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Every quote operation requires an authenticated owner.
   app.use("/api/quotes", requireAuth);
@@ -114,6 +118,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Presupuesto eliminado correctamente" });
     } catch (error) {
       res.status(500).json({ message: "No se pudo eliminar el presupuesto" });
+    }
+  });
+
+  // Create (or return the existing) public share link for a quote. Idempotent:
+  // calling it twice must not invalidate a link already sent to a client.
+  app.post("/api/quotes/:id/share", async (req, res) => {
+    try {
+      const id = parseQuoteId(req.params.id);
+      if (id === null) {
+        return res.status(400).json({ message: "ID de presupuesto inválido" });
+      }
+
+      const share = await storage.createQuoteShare(id, req.user!.id);
+      if (!share) {
+        return res.status(404).json({ message: "Presupuesto no encontrado" });
+      }
+
+      res.json({ token: share.token });
+    } catch (error) {
+      res.status(500).json({ message: "No se pudo generar el enlace para compartir" });
+    }
+  });
+
+  // Report whether a share link currently exists for a quote.
+  app.get("/api/quotes/:id/share", async (req, res) => {
+    try {
+      const id = parseQuoteId(req.params.id);
+      if (id === null) {
+        return res.status(400).json({ message: "ID de presupuesto inválido" });
+      }
+
+      const share = await storage.getQuoteShare(id, req.user!.id);
+      res.json({ token: share?.token ?? null });
+    } catch (error) {
+      res.status(500).json({ message: "No se pudo obtener el enlace para compartir" });
+    }
+  });
+
+  // Revoke the share link. The row is deleted, so sharing again mints a new token
+  // and the old link can never come back to life.
+  app.delete("/api/quotes/:id/share", async (req, res) => {
+    try {
+      const id = parseQuoteId(req.params.id);
+      if (id === null) {
+        return res.status(400).json({ message: "ID de presupuesto inválido" });
+      }
+
+      const quote = await storage.getQuote(id, req.user!.id);
+      if (!quote) {
+        return res.status(404).json({ message: "Presupuesto no encontrado" });
+      }
+
+      await storage.deleteQuoteShare(id, req.user!.id);
+      res.json({ message: "Enlace desactivado" });
+    } catch (error) {
+      res.status(500).json({ message: "No se pudo desactivar el enlace" });
+    }
+  });
+
+  // Public read-only access. This route sits outside the /api/quotes auth mount on
+  // purpose: the unguessable token IS the credential. It must never return the
+  // owner id, and responses must not be cached or indexed by search engines.
+  app.get("/api/shared/:token", async (req, res) => {
+    const { token } = req.params;
+
+    if (!SHARE_TOKEN_PATTERN.test(token)) {
+      return res.status(404).json({ message: "Enlace no encontrado" });
+    }
+
+    try {
+      const quote = await storage.getPublicQuoteByToken(token);
+      if (!quote) {
+        return res.status(404).json({ message: "Enlace no encontrado o desactivado" });
+      }
+
+      res.set("Cache-Control", "no-store");
+      res.set("X-Robots-Tag", "noindex, nofollow");
+      res.json(quote);
+    } catch (error) {
+      res.status(500).json({ message: "No se pudo obtener el presupuesto" });
     }
   });
 

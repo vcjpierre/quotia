@@ -27,6 +27,19 @@ export const quotes = pgTable("quotes", {
   ownerIdIdx: index("quotes_owner_id_idx").on(table.ownerId),
 }));
 
+// A public, read-only share link for a quote.
+// One row per quote: the token stays stable while the row exists, and revoking the
+// share deletes the row so sharing again always mints a brand new token.
+export const quoteShares = pgTable("quote_shares", {
+  id: serial("id").primaryKey(),
+  quoteId: integer("quote_id")
+    .notNull()
+    .unique()
+    .references(() => quotes.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const taskSchema = z.object({
   id: z.string(),
   description: z.string().min(1, "La descripción de la tarea es obligatoria"),
@@ -57,4 +70,23 @@ export const SUPPORTED_CURRENCIES = supportedCurrencies;
 export type InsertQuote = z.infer<typeof insertQuoteSchema>;
 export type NewQuote = InsertQuote & { ownerId: string };
 export type Quote = typeof quotes.$inferSelect;
+export type QuoteShare = typeof quoteShares.$inferSelect;
 export type Task = z.infer<typeof taskSchema>;
+// What a public share link may expose. Deliberately an allowlist instead of
+// `Omit<Quote, ...>` so a future internal column never becomes public by accident.
+export type PublicQuote = {
+  title: string;
+  createdAt: Date;
+  freelancerName: string;
+  freelancerTitle: string | null;
+  freelancerEmail: string | null;
+  freelancerPhone: string | null;
+  clientName: string | null;
+  clientAddress: string | null;
+  currency: string;
+  tasks: unknown;
+  subtotal: number;
+  tax: number;
+  total: number;
+  terms: string | null;
+};

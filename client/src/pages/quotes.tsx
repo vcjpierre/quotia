@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FileText, Eye, Trash2, Calendar, DollarSign } from "lucide-react";
+import { FileText, Eye, Trash2, Calendar, Share2, ExternalLink, Link2Off } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import { apiRequest, clearAuthToken, getQueryFn } from "@/lib/queryClient";
 import { authClient } from "@/lib/auth-client";
 import { type Quote, type Task } from "@shared/schema";
 import { formatCurrency, type Currency } from "@/lib/currency";
+import { buildShareUrl, copyShareUrl } from "@/lib/share";
 
 export default function QuotesPage() {
   const { toast } = useToast();
@@ -49,6 +50,63 @@ export default function QuotesPage() {
     onError: (error) => {
       toast({
         title: "No se pudo eliminar el presupuesto",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const { data: shareData } = useQuery<{ token: string | null }>({
+    queryKey: [`/api/quotes/${selectedQuote?.id}/share`],
+    queryFn: getQueryFn<{ token: string | null }>({ on401: "throw" }),
+    enabled: selectedQuote !== null,
+  });
+
+  const activeShareToken = shareData?.token ?? null;
+
+  const shareQuoteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest("POST", `/api/quotes/${id}/share`);
+      return (await response.json()) as { token: string };
+    },
+    onSuccess: async ({ token }, id) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/quotes/${id}/share`] });
+      const copied = await copyShareUrl(token);
+
+      toast(
+        copied
+          ? {
+              title: "Enlace copiado",
+              description:
+                "Compartilo con tu cliente: no necesita cuenta y podés desactivarlo cuando quieras.",
+            }
+          : { title: "Enlace para compartir", description: buildShareUrl(token) },
+      );
+    },
+    onError: (error) => {
+      toast({
+        title: "No se pudo generar el enlace",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const revokeShareMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest("DELETE", `/api/quotes/${id}/share`);
+      return response.json();
+    },
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/quotes/${id}/share`] });
+      toast({
+        title: "Enlace desactivado",
+        description: "Quien tenga el enlace anterior ya no puede ver el presupuesto.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "No se pudo desactivar el enlace",
         description: error.message,
         variant: "destructive",
       });
@@ -299,12 +357,51 @@ export default function QuotesPage() {
                     {/* Actions */}
                     <div className="space-y-2">
                       <Button className="w-full" onClick={() => {
-                        // TODO: Open quote in calculator for editing
                         window.location.href = `/calculator?quote=${selectedQuote.id}`;
                       }}>
                         <Eye className="h-4 w-4 mr-2" />
                         Editar presupuesto
                       </Button>
+
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => shareQuoteMutation.mutate(selectedQuote.id)}
+                        disabled={shareQuoteMutation.isPending}
+                      >
+                        <Share2 className="h-4 w-4 mr-2" />
+                        {activeShareToken
+                          ? "Copiar enlace de nuevo"
+                          : "Compartir con el cliente"}
+                      </Button>
+
+                      {activeShareToken ? (
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            className="flex-1"
+                            onClick={() =>
+                              window.open(
+                                buildShareUrl(activeShareToken),
+                                "_blank",
+                                "noopener,noreferrer",
+                              )
+                            }
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Ver
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            className="flex-1 text-red-500 hover:text-red-700"
+                            onClick={() => revokeShareMutation.mutate(selectedQuote.id)}
+                            disabled={revokeShareMutation.isPending}
+                          >
+                            <Link2Off className="h-4 w-4 mr-2" />
+                            Desactivar
+                          </Button>
+                        </div>
+                      ) : null}
                     </div>
                   </CardContent>
                 </Card>

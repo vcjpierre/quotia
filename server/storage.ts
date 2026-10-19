@@ -1,7 +1,21 @@
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { and, eq, desc } from "drizzle-orm";
-import { quotes, type Quote, type InsertQuote, type NewQuote } from "@shared/schema";
+import { randomBytes } from "node:crypto";
+import {
+  quotes,
+  quoteShares,
+  type Quote,
+  type QuoteShare,
+  type InsertQuote,
+  type NewQuote,
+  type PublicQuote,
+} from "@shared/schema";
+
+// 256 bits of entropy, URL-safe. For a shared quote the token is the credential.
+export function generateShareToken(): string {
+  return randomBytes(32).toString("base64url");
+}
 
 export interface IStorage {
   getQuote(id: number, ownerId: string): Promise<Quote | undefined>;
@@ -9,15 +23,36 @@ export interface IStorage {
   createQuote(quote: NewQuote): Promise<Quote>;
   updateQuote(id: number, ownerId: string, quote: Partial<InsertQuote>): Promise<Quote | undefined>;
   deleteQuote(id: number, ownerId: string): Promise<boolean>;
+  // Share links. All owner-scoped lookups verify ownership through getQuote.
+  getQuoteShare(quoteId: number, ownerId: string): Promise<QuoteShare | undefined>;
+  createQuoteShare(quoteId: number, ownerId: string): Promise<QuoteShare | undefined>;
+  deleteQuoteShare(quoteId: number, ownerId: string): Promise<boolean>;
+  // Public read path: the token alone grants read access, owner id is stripped.
+  getPublicQuoteByToken(token: string): Promise<PublicQuote | undefined>;
 }
 
 export class MemStorage implements IStorage {
   private quotes: Map<number, Quote>;
+  private shares: Map<number, QuoteShare>;
+  private sharesByToken: Map<string, QuoteShare>;
   private currentId: number;
+  private currentShareId: number;
 
   constructor() {
     this.quotes = new Map();
+    this.shares = new Map();
+    this.sharesByToken = new Map();
     this.currentId = 1;
+    this.currentShareId = 1;
+  }
+
+  private removeShare(quoteId: number): boolean {
+    const share = this.shares.get(quoteId);
+    if (!share) {
+      return false;
+    }
+    this.sharesByToken.delete(share.token);
+    return this.shares.delete(quoteId);
   }
 
   async getQuote(id: number, ownerId: string): Promise<Quote | undefined> {
@@ -83,7 +118,75 @@ export class MemStorage implements IStorage {
     if (!existingQuote || existingQuote.ownerId !== ownerId) {
       return false;
     }
+    this.removeShare(id);
     return this.quotes.delete(id);
+  }
+
+  async getQuoteShare(quoteId: number, ownerId: string): Promise<QuoteShare | undefined> {
+    const quote = await this.getQuote(quoteId, ownerId);
+    if (!quote) {
+      return undefined;
+    }
+    return this.shares.get(quoteId);
+  }
+
+  async createQuoteShare(quoteId: number, ownerId: string): Promise<QuoteShare | undefined> {
+    const quote = await this.getQuote(quoteId, ownerId);
+    if (!quote) {
+      return undefined;
+    }
+
+    const existing = this.shares.get(quoteId);
+    if (existing) {
+      return existing;
+    }
+
+    const share: QuoteShare = {
+      id: this.currentShareId++,
+      quoteId,
+      token: generateShareToken(),
+      createdAt: new Date(),
+    };
+    this.shares.set(quoteId, share);
+    this.sharesByToken.set(share.token, share);
+    return share;
+  }
+
+  async deleteQuoteShare(quoteId: number, ownerId: string): Promise<boolean> {
+    const quote = await this.getQuote(quoteId, ownerId);
+    if (!quote) {
+      return false;
+    }
+    return this.removeShare(quoteId);
+  }
+
+  async getPublicQuoteByToken(token: string): Promise<PublicQuote | undefined> {
+    const share = this.sharesByToken.get(token);
+    if (!share) {
+      return undefined;
+    }
+
+    const quote = this.quotes.get(share.quoteId);
+    if (!quote) {
+      return undefined;
+    }
+
+    return {
+      title: quote.title,
+      createdAt: quote.createdAt,
+      freelancerName: quote.freelancerName,
+      freelancerTitle: quote.freelancerTitle,
+      freelancerEmail: quote.freelancerEmail,
+      freelancerPhone: quote.freelancerPhone,
+      clientName: quote.clientName,
+      clientAddress: quote.clientAddress,
+      currency: quote.currency,
+      tasks: quote.tasks,
+      subtotal: quote.subtotal,
+      tax: quote.tax,
+      total: quote.total,
+      terms: quote.terms,
+    };
   }
 }
 
@@ -138,7 +241,86 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(quotes.id, id), eq(quotes.ownerId, ownerId)))
       .returning();
 
+    // quote_shares cascades on delete, so the share link dies with the quote.
     return result.length > 0;
+  }
+
+  async getQuoteShare(quoteId: number, ownerId: string): Promise<QuoteShare | undefined> {
+    const quote = await this.getQuote(quoteId, ownerId);
+    if (!quote) {
+      return undefined;
+    }
+
+    const result = await this.db
+      .select()
+      .from(quoteShares)
+      .where(eq(quoteShares.quoteId, quoteId))
+      .limit(1);
+
+    return result[0];
+  }
+
+  async createQuoteShare(quoteId: number, ownerId: string): Promise<QuoteShare | undefined> {
+    const quote = await this.getQuote(quoteId, ownerId);
+    if (!quote) {
+      return undefined;
+    }
+
+    // Idempotent: the unique quote_id constraint decides the winner if two
+    // requests race, and the loser simply reads the existing token back.
+    const inserted = await this.db
+      .insert(quoteShares)
+      .values({ quoteId, token: generateShareToken() })
+      .onConflictDoNothing({ target: quoteShares.quoteId })
+      .returning();
+
+    if (inserted[0]) {
+      return inserted[0];
+    }
+
+    return this.getQuoteShare(quoteId, ownerId);
+  }
+
+  async deleteQuoteShare(quoteId: number, ownerId: string): Promise<boolean> {
+    const quote = await this.getQuote(quoteId, ownerId);
+    if (!quote) {
+      return false;
+    }
+
+    const result = await this.db
+      .delete(quoteShares)
+      .where(eq(quoteShares.quoteId, quoteId))
+      .returning();
+
+    return result.length > 0;
+  }
+
+  async getPublicQuoteByToken(token: string): Promise<PublicQuote | undefined> {
+    // Explicit column allowlist: the public payload must not grow automatically
+    // when the quotes table gains internal columns.
+    const result = await this.db
+      .select({
+        title: quotes.title,
+        createdAt: quotes.createdAt,
+        freelancerName: quotes.freelancerName,
+        freelancerTitle: quotes.freelancerTitle,
+        freelancerEmail: quotes.freelancerEmail,
+        freelancerPhone: quotes.freelancerPhone,
+        clientName: quotes.clientName,
+        clientAddress: quotes.clientAddress,
+        currency: quotes.currency,
+        tasks: quotes.tasks,
+        subtotal: quotes.subtotal,
+        tax: quotes.tax,
+        total: quotes.total,
+        terms: quotes.terms,
+      })
+      .from(quoteShares)
+      .innerJoin(quotes, eq(quoteShares.quoteId, quotes.id))
+      .where(eq(quoteShares.token, token))
+      .limit(1);
+
+    return result[0];
   }
 }
 

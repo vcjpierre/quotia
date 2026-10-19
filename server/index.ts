@@ -11,7 +11,11 @@ app.use(attachUser);
 
 app.use((req, res, next) => {
   const start = Date.now();
-  const path = req.path;
+  // A share token is a credential, so it must never reach the logs.
+  const path = req.path.replace(/^\/api\/shared\/[^/]+/, "/api/shared/:token");
+  // Response bodies carry quote data (client contact details) and, for the share
+  // endpoints, tokens. Keep that noise out of production logs.
+  const logResponseBody = app.get("env") === "development";
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
   const originalResJson = res.json;
@@ -24,7 +28,7 @@ app.use((req, res, next) => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
+      if (capturedJsonResponse && logResponseBody) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
 
@@ -48,6 +52,15 @@ app.use((req, res, next) => {
 
     res.status(status).json({ message });
     throw err;
+  });
+
+  // The share page URL contains the access token. Keep it out of search indexes
+  // and caches, and stop it leaking through Referer to third-party assets.
+  app.use("/s", (_req, res, next) => {
+    res.set("X-Robots-Tag", "noindex, nofollow");
+    res.set("Referrer-Policy", "no-referrer");
+    res.set("Cache-Control", "no-store");
+    next();
   });
 
   // importantly only setup vite in development and after

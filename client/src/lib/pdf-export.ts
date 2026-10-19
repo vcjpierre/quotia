@@ -30,11 +30,3 @@ export async function exportToPDF(elementId: string, filename = "freelance-quote
     throw new Error("No se pudo exportar el PDF");
   }
 }
-
-export function generateShareableURL(quoteId?: number): string {
-  const baseUrl = window.location.origin;
-  if (quoteId) {
-    return `${baseUrl}/quote/${quoteId}`;
-  }
-  return `${baseUrl}/calculator`;
-}

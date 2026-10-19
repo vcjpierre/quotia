@@ -1,7 +1,7 @@
+import type { ChangeEvent } from "react";
 import { Code2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { type Task } from "@shared/schema";
 import { formatCurrency, type Currency } from "@/lib/currency";
@@ -26,9 +26,73 @@ interface ReceiptPreviewProps {
   };
   currency: Currency;
   terms: string;
-  onUpdateFreelancerInfo: (info: Partial<ReceiptPreviewProps["freelancerInfo"]>) => void;
-  onUpdateClientInfo: (info: Partial<ReceiptPreviewProps["clientInfo"]>) => void;
-  onUpdateTerms: (terms: string) => void;
+  onUpdateFreelancerInfo?: (info: Partial<ReceiptPreviewProps["freelancerInfo"]>) => void;
+  onUpdateClientInfo?: (info: Partial<ReceiptPreviewProps["clientInfo"]>) => void;
+  onUpdateTerms?: (terms: string) => void;
+  /**
+   * Renders the quote as a read-only document: this is exactly what a client sees
+   * through a share link, so the freelancer preview cannot drift from it.
+   */
+  readOnly?: boolean;
+  /** Stable reference shown instead of the random per-render number. */
+  reference?: string;
+  /** Issue date to display; defaults to today. */
+  issuedAt?: string | Date;
+}
+
+interface FieldProps {
+  readOnly: boolean;
+  value: string;
+  onChange?: (value: string) => void;
+  placeholder?: string;
+  className?: string;
+  multiline?: boolean;
+  rows?: number;
+}
+
+function Field({
+  readOnly,
+  value,
+  onChange,
+  placeholder,
+  className = "",
+  multiline = false,
+  rows,
+}: FieldProps) {
+  if (readOnly) {
+    return (
+      <div className={className}>
+        {value || (
+          <span className="text-slate-400 dark:text-slate-500">{placeholder}</span>
+        )}
+      </div>
+    );
+  }
+
+  const handleChange = (
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => onChange?.(event.target.value);
+
+  if (multiline) {
+    return (
+      <Textarea
+        value={value}
+        onChange={handleChange}
+        className={className}
+        placeholder={placeholder}
+        rows={rows ?? 2}
+      />
+    );
+  }
+
+  return (
+    <Input
+      value={value}
+      onChange={handleChange}
+      className={className}
+      placeholder={placeholder}
+    />
+  );
 }
 
 export function ReceiptPreview({
@@ -41,22 +105,29 @@ export function ReceiptPreview({
   onUpdateFreelancerInfo,
   onUpdateClientInfo,
   onUpdateTerms,
+  readOnly = false,
+  reference,
+  issuedAt,
 }: ReceiptPreviewProps) {
+  const issueDate = issuedAt ? new Date(issuedAt) : new Date();
 
-  const currentDate = new Date().toLocaleDateString('es-ES', {
+  const currentDate = issueDate.toLocaleDateString('es-ES', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
   });
 
-  const quoteNumber = `QT-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+  const quoteNumber =
+    reference ?? `QT-${issueDate.getFullYear()}-${String(Date.now()).slice(-6)}`;
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="bg-slate-50 dark:bg-slate-700 border-b border-slate-200 dark:border-slate-600">
-        <CardTitle>Vista previa del recibo</CardTitle>
-      </CardHeader>
-      
+      {readOnly ? null : (
+        <CardHeader className="bg-slate-50 dark:bg-slate-700 border-b border-slate-200 dark:border-slate-600">
+          <CardTitle>Vista previa del recibo</CardTitle>
+        </CardHeader>
+      )}
+
       <CardContent id="receipt-content" className="p-6 bg-white dark:bg-slate-800">
         {/* Receipt Header */}
         <div className="text-center mb-8">
@@ -65,30 +136,34 @@ export function ReceiptPreview({
               <Code2 className="h-8 w-8" />
             </div>
             <div className="text-left">
-              <Input
+              <Field
+                readOnly={readOnly}
                 value={freelancerInfo.name}
-                onChange={(e) => onUpdateFreelancerInfo({ name: e.target.value })}
+                onChange={(name) => onUpdateFreelancerInfo?.({ name })}
                 className="text-2xl font-bold border-none p-0 h-auto bg-transparent"
                 placeholder="Tu nombre"
               />
-              <Input
+              <Field
+                readOnly={readOnly}
                 value={freelancerInfo.title}
-                onChange={(e) => onUpdateFreelancerInfo({ title: e.target.value })}
+                onChange={(title) => onUpdateFreelancerInfo?.({ title })}
                 className="text-slate-600 dark:text-slate-400 border-none p-0 h-auto bg-transparent"
                 placeholder="Tu cargo"
               />
             </div>
           </div>
           <div className="text-sm text-slate-500 dark:text-slate-400 space-y-1">
-            <Input
+            <Field
+              readOnly={readOnly}
               value={freelancerInfo.email}
-              onChange={(e) => onUpdateFreelancerInfo({ email: e.target.value })}
+              onChange={(email) => onUpdateFreelancerInfo?.({ email })}
               className="text-center border-none p-0 h-auto bg-transparent"
               placeholder="tu.correo@ejemplo.com"
             />
-            <Input
+            <Field
+              readOnly={readOnly}
               value={freelancerInfo.phone}
-              onChange={(e) => onUpdateFreelancerInfo({ phone: e.target.value })}
+              onChange={(phone) => onUpdateFreelancerInfo?.({ phone })}
               className="text-center border-none p-0 h-auto bg-transparent"
               placeholder="+1 (555) 123-4567"
             />
@@ -99,17 +174,20 @@ export function ReceiptPreview({
         <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-700 rounded-lg">
           <h4 className="font-semibold text-slate-900 dark:text-white mb-2">Facturar a:</h4>
           <div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
-            <Input
+            <Field
+              readOnly={readOnly}
               value={clientInfo.name}
-              onChange={(e) => onUpdateClientInfo({ name: e.target.value })}
+              onChange={(name) => onUpdateClientInfo?.({ name })}
               className="font-medium text-slate-900 dark:text-white border-none p-0 h-auto bg-transparent"
               placeholder="Nombre del cliente"
             />
-            <Textarea
+            <Field
+              readOnly={readOnly}
               value={clientInfo.address}
-              onChange={(e) => onUpdateClientInfo({ address: e.target.value })}
+              onChange={(address) => onUpdateClientInfo?.({ address })}
               className="border-none p-0 bg-transparent resize-none"
               placeholder="Dirección del cliente"
+              multiline
               rows={2}
             />
           </div>
@@ -199,11 +277,13 @@ export function ReceiptPreview({
           <h4 className="font-semibold text-slate-900 dark:text-white mb-3">
             Términos y condiciones
           </h4>
-          <Textarea
+          <Field
+            readOnly={readOnly}
             value={terms}
-            onChange={(e) => onUpdateTerms(e.target.value)}
-            className="text-sm text-slate-600 dark:text-slate-400 bg-transparent border-none p-0 resize-none"
+            onChange={(value) => onUpdateTerms?.(value)}
+            className="text-sm text-slate-600 dark:text-slate-400 bg-transparent border-none p-0 resize-none whitespace-pre-line"
             placeholder="Ingresa los términos y condiciones..."
+            multiline
             rows={4}
           />
         </div>

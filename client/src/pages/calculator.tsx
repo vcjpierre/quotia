@@ -11,8 +11,9 @@ import { RateConfiguration } from "@/components/rate-configuration";
 import { TaskManagement } from "@/components/task-management";
 import { CostSummary } from "@/components/cost-summary";
 import { ReceiptPreview } from "@/components/receipt-preview";
-import { exportToPDF, generateShareableURL } from "@/lib/pdf-export";
+import { exportToPDF } from "@/lib/pdf-export";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
+import { buildShareUrl, copyShareUrl } from "@/lib/share";
 import { insertQuoteSchema, type Quote } from "@shared/schema";
 
 export default function CalculatorPage() {
@@ -127,6 +128,12 @@ export default function CalculatorPage() {
           ? "Los cambios se guardaron correctamente."
           : `El presupuesto n.º ${quote.id} se guardó correctamente.`,
       });
+
+      if (!isEditReady) {
+        // Keep the freshly saved quote in the URL so "Compartir" has a stable id
+        // to point at instead of an unsaved draft.
+        navigate(`/calculator?quote=${quote.id}`);
+      }
     },
     onError: (error) => {
       toast({
@@ -179,19 +186,69 @@ export default function CalculatorPage() {
     }
   };
 
+  const shareQuoteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest("POST", `/api/quotes/${id}/share`);
+      return (await response.json()) as { token: string };
+    },
+    onSuccess: async ({ token }) => {
+      const copied = await copyShareUrl(token);
+
+      toast(
+        copied
+          ? {
+              title: "Enlace copiado",
+              description:
+                "Compartilo con tu cliente: puede ver el presupuesto sin cuenta y podés desactivarlo cuando quieras.",
+            }
+          : {
+              title: "Enlace para compartir",
+              description: buildShareUrl(token),
+            },
+      );
+    },
+    onError: (error) => {
+      toast({
+        title: "No se pudo compartir el presupuesto",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleShare = () => {
-    const url = generateShareableURL();
-    navigator.clipboard.writeText(url).then(() => {
+    if (isAuthPending) {
+      return;
+    }
+
+    if (!isAuthenticated) {
       toast({
-        title: "¡Enlace copiado!",
-        description: "El enlace para compartir se copió al portapapeles.",
+        title: "Iniciá sesión para compartir",
+        description: "El enlace apunta a un presupuesto guardado en tu cuenta.",
       });
-    }).catch(() => {
+      navigate(`/login?redirect=${encodeURIComponent(returnPath)}`);
+      return;
+    }
+
+    if (quoteId === null) {
       toast({
-        title: "Compartir enlace",
-        description: url,
+        title: "Guardá el presupuesto antes de compartirlo",
+        description:
+          "El enlace apunta al presupuesto guardado, así lo que ve tu cliente no cambia si seguís editando.",
       });
-    });
+      return;
+    }
+
+    if (!isEditReady) {
+      toast({
+        title: "No se pudo preparar el enlace",
+        description: "Verificá que el presupuesto exista y que tengas acceso.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    shareQuoteMutation.mutate(quoteId);
   };
 
   const isSaveDisabled =

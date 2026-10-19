@@ -10,6 +10,7 @@ import Calculator from "@/pages/calculator";
 import Quotes from "@/pages/quotes";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
+import SharedQuote from "@/pages/shared-quote";
 import NotFound from "@/pages/not-found";
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -37,6 +38,8 @@ function Router() {
       <Route path="/calculator" component={Calculator} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      {/* Public read-only quote: intentionally outside ProtectedRoute. */}
+      <Route path="/s/:token" component={SharedQuote} />
       <Route path="/quotes">
         {() => (
           <ProtectedRoute>
