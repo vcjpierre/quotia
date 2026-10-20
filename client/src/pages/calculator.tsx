@@ -267,12 +267,12 @@ export default function CalculatorPage() {
         : "Guardar presupuesto";
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
+    <div className="min-h-screen bg-background">
       <Navigation />
 
-      {isEditUnavailable ? (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-          <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+      <div className="mx-auto max-w-6xl px-4 pt-8 sm:px-6 lg:px-8">
+        {isEditUnavailable ? (
+          <div className="mb-6 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
             <p className="font-medium">
               No se pudo cargar el presupuesto para editar.
             </p>
@@ -297,28 +297,34 @@ export default function CalculatorPage() {
               </Button>
             </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
 
-      {/* Save Quote Button */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex justify-end">
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              Calculadora
+            </p>
+            <h1 className="mt-1 text-3xl font-bold tracking-tight text-foreground">
+              {isEditRequested ? "Editar presupuesto" : "Nuevo presupuesto"}
+            </h1>
+            <p className="mt-1 text-muted-foreground">
+              Definí tu tarifa, sumá tareas y obtené el total al instante.
+            </p>
+          </div>
           <Button
-            variant="outline"
-            size="sm"
             onClick={handleSave}
             disabled={isSaveDisabled}
-            className="flex items-center space-x-2"
+            className="gap-2"
           >
-            <Save className="h-4 w-4" />
-            <span className="hidden sm:inline">{saveButtonLabel}</span>
+            <Save className="h-4 w-4" aria-hidden="true" />
+            <span>{saveButtonLabel}</span>
           </Button>
         </div>
       </div>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      <main className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
 
           {/* Left Side - Input Forms */}
           <div className="xl:col-span-2 space-y-6">

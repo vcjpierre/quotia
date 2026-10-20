@@ -146,41 +146,49 @@ export default function QuotesPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-slate-600 dark:text-slate-400">Cargando presupuestos...</p>
+          <div
+            className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-muted border-t-primary"
+            aria-hidden="true"
+          />
+          <p className="text-sm text-muted-foreground">Cargando presupuestos...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="min-h-screen bg-background">
       <Navigation />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            Tu trabajo, ordenado
+          </p>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight text-foreground">
             Presupuestos guardados
           </h1>
-          <p className="text-slate-600 dark:text-slate-400">
-            Administra y consulta los presupuestos de tus proyectos freelance
+          <p className="mt-1 text-muted-foreground">
+            Administrá y consultá los presupuestos de tus proyectos.
           </p>
         </div>
 
         {quotesError ? (
           <Card>
-            <CardContent className="text-center py-12">
-              <FileText className="h-16 w-16 mx-auto mb-4 text-slate-400" />
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+            <CardContent className="py-14 text-center">
+              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
+                <FileText className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+              </span>
+              <h3 className="mt-5 text-base font-semibold text-foreground">
                 No se pudieron cargar los presupuestos
               </h3>
-              <p className="text-slate-600 dark:text-slate-400">
+              <p className="mt-1 text-sm text-muted-foreground">
                 {isUnauthorized
                   ? "Tu sesión expiró. Iniciá sesión nuevamente."
                   : "Volvé a intentarlo en unos instantes."}
               </p>
-              <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <div className="mt-5 flex flex-wrap justify-center gap-2">
                 <Button variant="outline" onClick={() => void refetchQuotes()}>
                   Reintentar
                 </Button>
@@ -194,68 +202,76 @@ export default function QuotesPage() {
           </Card>
         ) : quotes.length === 0 ? (
           <Card>
-            <CardContent className="text-center py-12">
-              <FileText className="h-16 w-16 mx-auto mb-4 text-slate-400" />
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+            <CardContent className="py-14 text-center">
+              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
+                <FileText className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+              </span>
+              <h3 className="mt-5 text-base font-semibold text-foreground">
                 Aún no hay presupuestos guardados
               </h3>
-              <p className="text-slate-600 dark:text-slate-400 mb-4">
-                Crea presupuestos con la calculadora para verlos aquí.
+              <p className="mt-1 text-sm text-muted-foreground">
+                Creá tu primer presupuesto con la calculadora y aparecerá acá.
               </p>
-              <Button onClick={() => window.location.href = "/calculator"}>
+              <Button className="mt-5" onClick={() => (window.location.href = "/calculator")}>
                 Crear primer presupuesto
               </Button>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* Quotes List */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               {quotes.map((quote) => (
-                <Card 
-                  key={quote.id} 
-                  className={`cursor-pointer transition-all hover:shadow-md ${
-                    selectedQuote?.id === quote.id ? 'ring-2 ring-primary' : ''
+                <Card
+                  key={quote.id}
+                  className={`cursor-pointer transition-shadow duration-200 hover:shadow-elevated ${
+                    selectedQuote?.id === quote.id
+                      ? "border-primary/60 ring-1 ring-primary/60"
+                      : ""
                   }`}
                   onClick={() => setSelectedQuote(quote)}
                 >
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="font-semibold text-slate-900 dark:text-white mb-1">
+                  <CardContent className="p-5">
+                    <div className="mb-4 flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="truncate font-semibold text-foreground">
                           {quote.title}
                         </h3>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          {quote.clientName || 'Sin cliente especificado'}
+                        <p className="mt-0.5 truncate text-sm text-muted-foreground">
+                          {quote.clientName || "Sin cliente especificado"}
                         </p>
                       </div>
-                      <Badge variant="secondary" className="bg-accent/10 text-accent">
+                      <Badge
+                        variant="secondary"
+                        className="shrink-0 bg-primary/10 text-primary"
+                      >
                         {formatCurrencyFromCents(quote.total, quote.currency as Currency)}
                       </Badge>
                     </div>
 
-                    <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
-                      <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-1">
-                          <Calendar className="h-4 w-4" />
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <div className="flex items-center gap-4">
+                        <span className="flex items-center gap-1.5">
+                          <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
                           <span>{formatDate(quote.createdAt)}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <FileText className="h-4 w-4" />
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <FileText className="h-3.5 w-3.5" aria-hidden="true" />
                           <span>{(quote.tasks as Task[]).length} tareas</span>
-                        </div>
+                        </span>
                       </div>
                       <Button
                         variant="ghost"
                         size="sm"
+                        aria-label={`Eliminar ${quote.title}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           deleteQuoteMutation.mutate(quote.id);
                         }}
-                        className="text-red-500 hover:text-red-700"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                         disabled={deleteQuoteMutation.isPending}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </div>
                   </CardContent>
@@ -264,71 +280,97 @@ export default function QuotesPage() {
             </div>
 
             {/* Quote Detail */}
-            <div className="lg:sticky lg:top-6">
+            <div className="lg:sticky lg:top-24">
               {selectedQuote ? (
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span>Detalles del presupuesto</span>
-                      <Badge variant="outline">#{selectedQuote.id}</Badge>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center justify-between gap-3">
+                      <span>Detalle del presupuesto</span>
+                      <Badge variant="outline" className="shrink-0 tabular">
+                        #{selectedQuote.id}
+                      </Badge>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-6 pt-4">
                     {/* Client Info */}
                     <div>
-                      <h4 className="font-semibold text-slate-900 dark:text-white mb-2">
-                        Información del cliente
+                      <h4 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                        Cliente
                       </h4>
-                      <div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
-                        <p><strong>Nombre:</strong> {selectedQuote.clientName || 'No especificado'}</p>
-                        <p><strong>Correo:</strong> {selectedQuote.clientEmail || 'No especificado'}</p>
-                        <p><strong>Dirección:</strong> {selectedQuote.clientAddress || 'No especificado'}</p>
-                      </div>
+                      <dl className="mt-2 space-y-1.5 text-sm">
+                        <div className="flex justify-between gap-4">
+                          <dt className="text-muted-foreground">Nombre</dt>
+                          <dd className="truncate font-medium text-foreground">
+                            {selectedQuote.clientName || "No especificado"}
+                          </dd>
+                        </div>
+                        <div className="flex justify-between gap-4">
+                          <dt className="text-muted-foreground">Correo</dt>
+                          <dd className="truncate font-medium text-foreground">
+                            {selectedQuote.clientEmail || "No especificado"}
+                          </dd>
+                        </div>
+                        <div className="flex justify-between gap-4">
+                          <dt className="text-muted-foreground">Dirección</dt>
+                          <dd className="truncate font-medium text-foreground">
+                            {selectedQuote.clientAddress || "No especificado"}
+                          </dd>
+                        </div>
+                      </dl>
                     </div>
 
                     {/* Project Summary */}
                     <div>
-                      <h4 className="font-semibold text-slate-900 dark:text-white mb-2">
+                      <h4 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                         Resumen del proyecto
                       </h4>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-600 dark:text-slate-400">Tarifa por hora:</span>
-                          <span className="font-medium">{formatCurrencyFromCents(selectedQuote.hourlyRate, selectedQuote.currency as Currency)}/h</span>
+                      <dl className="mt-2 space-y-1.5 text-sm">
+                        <div className="flex justify-between gap-4">
+                          <dt className="text-muted-foreground">Tarifa por hora</dt>
+                          <dd className="font-medium tabular text-foreground">
+                            {formatCurrencyFromCents(selectedQuote.hourlyRate, selectedQuote.currency as Currency)}/h
+                          </dd>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-600 dark:text-slate-400">Horas por día:</span>
-                          <span className="font-medium">{selectedQuote.hoursPerDay} h</span>
+                        <div className="flex justify-between gap-4">
+                          <dt className="text-muted-foreground">Horas por día</dt>
+                          <dd className="font-medium tabular text-foreground">
+                            {selectedQuote.hoursPerDay} h
+                          </dd>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-600 dark:text-slate-400">Tareas totales:</span>
-                          <span className="font-medium">{(selectedQuote.tasks as Task[]).length}</span>
+                        <div className="flex justify-between gap-4">
+                          <dt className="text-muted-foreground">Tareas totales</dt>
+                          <dd className="font-medium tabular text-foreground">
+                            {(selectedQuote.tasks as Task[]).length}
+                          </dd>
                         </div>
-                      </div>
+                      </dl>
                     </div>
 
                     {/* Tasks Breakdown */}
                     <div>
-                      <h4 className="font-semibold text-slate-900 dark:text-white mb-2">
+                      <h4 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                         Desglose de tareas
                       </h4>
-                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                      <div className="mt-2 max-h-52 space-y-2 overflow-y-auto pr-1">
                         {(selectedQuote.tasks as Task[]).map((task: Task) => (
-                          <div key={task.id} className="flex justify-between items-start p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-slate-900 dark:text-white">
+                          <div
+                            key={task.id}
+                            className="flex items-start justify-between gap-3 rounded-lg border border-border bg-muted/50 p-3"
+                          >
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-foreground">
                                 {task.description}
                               </p>
-                              <div className="flex items-center space-x-2 mt-1">
-                                <Badge variant="outline" className="text-xs">
+                              <div className="mt-1.5 flex items-center gap-2">
+                                <Badge variant="outline" className="text-[10px] font-medium">
                                   {getTaskTypeLabel(task.type)}
                                 </Badge>
-                                <span className="text-xs text-slate-500 dark:text-slate-400">
+                                <span className="text-xs tabular text-muted-foreground">
                                   {task.hours} h
                                 </span>
                               </div>
                             </div>
-                            <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                            <span className="shrink-0 text-sm font-semibold tabular text-foreground">
                               {formatCurrency(task.cost, selectedQuote.currency as Currency)}
                             </span>
                           </div>
@@ -337,39 +379,48 @@ export default function QuotesPage() {
                     </div>
 
                     {/* Cost Summary */}
-                    <div className="border-t border-slate-200 dark:border-slate-600 pt-4">
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-600 dark:text-slate-400">Subtotal:</span>
-                          <span className="font-medium">{formatCurrencyFromCents(selectedQuote.subtotal, selectedQuote.currency as Currency)}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-600 dark:text-slate-400">Impuestos:</span>
-                          <span className="font-medium">{formatCurrencyFromCents(selectedQuote.tax, selectedQuote.currency as Currency)}</span>
-                        </div>
-                        <div className="flex justify-between text-lg font-bold text-accent border-t border-slate-200 dark:border-slate-600 pt-2">
-                          <span>Total:</span>
-                          <span>{formatCurrencyFromCents(selectedQuote.total, selectedQuote.currency as Currency)}</span>
-                        </div>
+                    <div className="space-y-2 border-t border-border pt-4">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Subtotal</span>
+                        <span className="font-medium tabular text-foreground">
+                          {formatCurrencyFromCents(selectedQuote.subtotal, selectedQuote.currency as Currency)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Impuestos</span>
+                        <span className="font-medium tabular text-foreground">
+                          {formatCurrencyFromCents(selectedQuote.tax, selectedQuote.currency as Currency)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between rounded-lg bg-foreground px-4 py-3 text-background">
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] opacity-80">
+                          Total
+                        </span>
+                        <span className="text-lg font-bold tabular">
+                          {formatCurrencyFromCents(selectedQuote.total, selectedQuote.currency as Currency)}
+                        </span>
                       </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="space-y-2">
-                      <Button className="w-full" onClick={() => {
-                        window.location.href = `/calculator?quote=${selectedQuote.id}`;
-                      }}>
-                        <Eye className="h-4 w-4 mr-2" />
+                    <div className="space-y-2 pt-2">
+                      <Button
+                        className="w-full gap-2"
+                        onClick={() => {
+                          window.location.href = `/calculator?quote=${selectedQuote.id}`;
+                        }}
+                      >
+                        <Eye className="h-4 w-4" aria-hidden="true" />
                         Editar presupuesto
                       </Button>
 
                       <Button
                         variant="outline"
-                        className="w-full"
+                        className="w-full gap-2"
                         onClick={() => shareQuoteMutation.mutate(selectedQuote.id)}
                         disabled={shareQuoteMutation.isPending}
                       >
-                        <Share2 className="h-4 w-4 mr-2" />
+                        <Share2 className="h-4 w-4" aria-hidden="true" />
                         {activeShareToken
                           ? "Copiar enlace de nuevo"
                           : "Compartir con el cliente"}
@@ -379,7 +430,7 @@ export default function QuotesPage() {
                         <div className="flex gap-2">
                           <Button
                             variant="ghost"
-                            className="flex-1"
+                            className="flex-1 gap-2"
                             onClick={() =>
                               window.open(
                                 buildShareUrl(activeShareToken),
@@ -388,16 +439,16 @@ export default function QuotesPage() {
                               )
                             }
                           >
-                            <ExternalLink className="h-4 w-4 mr-2" />
+                            <ExternalLink className="h-4 w-4" aria-hidden="true" />
                             Ver
                           </Button>
                           <Button
                             variant="ghost"
-                            className="flex-1 text-red-500 hover:text-red-700"
+                            className="flex-1 gap-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                             onClick={() => revokeShareMutation.mutate(selectedQuote.id)}
                             disabled={revokeShareMutation.isPending}
                           >
-                            <Link2Off className="h-4 w-4 mr-2" />
+                            <Link2Off className="h-4 w-4" aria-hidden="true" />
                             Desactivar
                           </Button>
                         </div>
@@ -407,13 +458,15 @@ export default function QuotesPage() {
                 </Card>
               ) : (
                 <Card>
-                  <CardContent className="text-center py-12">
-                    <Eye className="h-12 w-12 mx-auto mb-4 text-slate-400" />
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                      Selecciona un presupuesto
+                  <CardContent className="py-14 text-center">
+                    <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
+                      <Eye className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+                    </span>
+                    <h3 className="mt-5 text-base font-semibold text-foreground">
+                      Seleccioná un presupuesto
                     </h3>
-                    <p className="text-slate-600 dark:text-slate-400">
-                      Haz clic en un presupuesto de la lista para ver sus detalles aquí.
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Hacé clic en un presupuesto de la lista para ver su detalle acá.
                     </p>
                   </CardContent>
                 </Card>

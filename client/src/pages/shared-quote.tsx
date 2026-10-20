@@ -2,7 +2,7 @@ import { Download, FileWarning, Loader2 } from "lucide-react";
 import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { QuotiaMark } from "@/components/brand";
 import { useToast } from "@/hooks/use-toast";
 import { ReceiptPreview } from "@/components/receipt-preview";
 import { exportToPDF } from "@/lib/pdf-export";
@@ -63,10 +63,10 @@ export default function SharedQuotePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center px-4">
+      <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4">
         <div className="text-center">
-          <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-slate-600 dark:text-slate-400">Cargando presupuesto...</p>
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" aria-hidden="true" />
+          <p className="mt-4 text-sm text-muted-foreground">Cargando presupuesto...</p>
         </div>
       </div>
     );
@@ -74,24 +74,24 @@ export default function SharedQuotePage() {
 
   if (notFound || !quote) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center px-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="text-center py-12">
-            <FileWarning className="h-14 w-14 mx-auto mb-4 text-slate-400" />
-            <h1 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-              Este enlace no está disponible
-            </h1>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Puede haber sido desactivado por quien lo compartió o estar incompleto.
-              Pedile un enlace nuevo a la persona que te envió el presupuesto.
-            </p>
-            {notFound ? null : (
-              <Button variant="outline" className="mt-4" onClick={() => void refetch()}>
-                Reintentar
-              </Button>
-            )}
-          </CardContent>
-        </Card>
+      <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4 py-12">
+        <div className="w-full max-w-md rounded-xl border bg-card p-8 text-center shadow-card">
+          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
+            <FileWarning className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+          </span>
+          <h1 className="mt-5 text-lg font-semibold tracking-tight text-foreground">
+            Este enlace no está disponible
+          </h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            Puede haber sido desactivado por quien lo compartió o estar incompleto.
+            Pedile un enlace nuevo a la persona que te envió el presupuesto.
+          </p>
+          {notFound ? null : (
+            <Button variant="outline" className="mt-5" onClick={() => void refetch()}>
+              Reintentar
+            </Button>
+          )}
+        </div>
       </div>
     );
   }
@@ -108,48 +108,70 @@ export default function SharedQuotePage() {
   const tasks = quote.tasks as Task[];
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-        <header className="mb-6 flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              Presupuesto compartido
-            </p>
-            <h1 className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">
-              {quote.title}
-            </h1>
+    <div className="min-h-screen bg-muted/40">
+      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
+        <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <QuotiaMark className="h-9 w-9 text-primary" />
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                Presupuesto compartido
+              </p>
+              <h1 className="mt-0.5 text-lg font-semibold tracking-tight text-foreground">
+                {quote.title}
+              </h1>
+            </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => void handleDownload()}>
-            <Download className="h-4 w-4" />
-            <span className="ml-2 hidden sm:inline">Descargar PDF</span>
-          </Button>
+
+          <div className="flex items-center gap-3">
+            <span className="hidden rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold tabular text-muted-foreground sm:inline-flex">
+              {reference}
+            </span>
+            <Button size="sm" onClick={() => void handleDownload()}>
+              <Download className="h-4 w-4" aria-hidden="true" />
+              <span className="ml-2 hidden sm:inline">Descargar PDF</span>
+              <span className="sr-only sm:hidden">Descargar PDF</span>
+            </Button>
+          </div>
         </header>
 
-        <ReceiptPreview
-          readOnly
-          freelancerInfo={{
-            name: quote.freelancerName ?? "",
-            title: quote.freelancerTitle ?? "",
-            email: quote.freelancerEmail ?? "",
-            phone: quote.freelancerPhone ?? "",
-          }}
-          clientInfo={{
-            name: quote.clientName ?? "",
-            // The client's email is internal and never rendered in the document.
-            email: "",
-            address: quote.clientAddress ?? "",
-          }}
-          tasks={tasks}
-          summary={{
-            subtotal: quote.subtotal / 100,
-            tax: quote.tax / 100,
-            total: quote.total / 100,
-          }}
-          currency={currency}
-          terms={quote.terms ?? ""}
-          reference={reference}
-          issuedAt={quote.createdAt}
-        />
+        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-elevated">
+          <ReceiptPreview
+            readOnly
+            freelancerInfo={{
+              name: quote.freelancerName ?? "",
+              title: quote.freelancerTitle ?? "",
+              email: quote.freelancerEmail ?? "",
+              phone: quote.freelancerPhone ?? "",
+            }}
+            clientInfo={{
+              name: quote.clientName ?? "",
+              // The client's email is internal and never rendered in the document.
+              email: "",
+              address: quote.clientAddress ?? "",
+            }}
+            tasks={tasks}
+            summary={{
+              subtotal: quote.subtotal / 100,
+              tax: quote.tax / 100,
+              total: quote.total / 100,
+            }}
+            currency={currency}
+            terms={quote.terms ?? ""}
+            reference={reference}
+            issuedAt={quote.createdAt}
+          />
+        </div>
+
+        <footer className="mt-8 flex flex-col items-center gap-3 text-center">
+          <p className="max-w-md text-xs leading-relaxed text-muted-foreground">
+            Este enlace es de solo lectura: los datos no se pueden editar desde acá.
+          </p>
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+            <QuotiaMark className="h-4 w-4 text-primary" />
+            Hecho con Quotia
+          </span>
+        </footer>
       </div>
     </div>
   );

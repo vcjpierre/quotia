@@ -1,11 +1,39 @@
-import { Calculator, FileText, LogIn, LogOut, Moon, Sun, User } from "lucide-react";
+import { Calculator, FileText, LogIn, LogOut, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { QuotiaLogo } from "@/components/brand";
 import { useTheme } from "@/components/theme-provider";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/use-auth";
 import { authClient } from "@/lib/auth-client";
 import { clearAuthToken, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+
+const links = [
+  {
+    href: "/calculator",
+    label: "Calculadora",
+    icon: Calculator,
+    isActive: (location: string) => location === "/" || location === "/calculator",
+  },
+  {
+    href: "/quotes",
+    label: "Presupuestos",
+    icon: FileText,
+    isActive: (location: string) => location === "/quotes",
+  },
+];
+
+function navLinkClass(active: boolean, compact = false) {
+  return cn(
+    "inline-flex items-center gap-2 rounded-lg text-sm font-medium transition-colors duration-200",
+    compact ? "w-full px-3 py-2.5" : "px-3 py-2",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+    active
+      ? "bg-primary/10 text-primary"
+      : "text-muted-foreground hover:bg-accent hover:text-foreground",
+  );
+}
 
 export function Navigation() {
   const { theme, toggleTheme } = useTheme();
@@ -36,143 +64,136 @@ export function Navigation() {
     }
   };
 
+  const displayName = user?.name || user?.email || "";
+  const initials = displayName.trim().charAt(0).toUpperCase() || "?";
+
   return (
-    <header className="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-8">
-            <Link href="/" className="flex items-center space-x-3">
-              <div className="bg-primary text-white rounded-lg p-2">
-                <Calculator className="h-6 w-6" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
-                  Quotia
-                </h1>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  Facturación profesional sin complicaciones
-                </p>
-              </div>
-            </Link>
-
-            <nav className="hidden md:flex items-center space-x-6">
-              <Link
-                href="/calculator"
-                className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  location === "/" || location === "/calculator"
-                    ? "bg-primary/10 text-primary"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700"
-                }`}
-              >
-                <Calculator className="h-4 w-4" />
-                <span>Calculadora</span>
-              </Link>
-
-              <Link
-                href="/quotes"
-                className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  location === "/quotes"
-                    ? "bg-primary/10 text-primary"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700"
-                }`}
-              >
-                <FileText className="h-4 w-4" />
-                <span>Presupuestos guardados</span>
-              </Link>
-            </nav>
-          </div>
-
-          <div className="flex items-center space-x-3">
-            {!isPending && user ? (
-              <div className="hidden md:flex items-center space-x-3">
-                <span className="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-300 max-w-[180px] truncate">
-                  <User className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{user.name || user.email}</span>
-                </span>
-                <Button variant="outline" size="sm" onClick={handleSignOut}>
-                  <LogOut className="h-4 w-4" />
-                  <span>Cerrar sesión</span>
-                </Button>
-              </div>
-            ) : null}
-
-            {!isPending && !user ? (
-              <Button variant="outline" size="sm" asChild className="hidden md:inline-flex">
-                <Link href="/login">
-                  <LogIn className="h-4 w-4" />
-                  <span>Iniciar sesión</span>
-                </Link>
-              </Button>
-            ) : null}
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={toggleTheme}
-              className="p-2"
-            >
-              {theme === "dark" ? (
-                <Sun className="h-4 w-4" />
-              ) : (
-                <Moon className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Navigation */}
-      <div className="md:hidden border-t border-slate-200 dark:border-slate-700">
-        <div className="px-4 py-3 space-y-1">
+    <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-1 md:gap-8">
           <Link
             href="/calculator"
-            className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-              location === "/" || location === "/calculator"
-                ? "bg-primary/10 text-primary"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700"
-            }`}
+            className="rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            aria-label="Quotia — ir a la calculadora"
           >
-            <Calculator className="h-4 w-4" />
-            <span>Calculadora</span>
+            <QuotiaLogo markClassName="h-8 w-8" />
           </Link>
 
-          <Link
-            href="/quotes"
-            className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-              location === "/quotes"
-                ? "bg-primary/10 text-primary"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700"
-            }`}
-          >
-            <FileText className="h-4 w-4" />
-            <span>Presupuestos guardados</span>
-          </Link>
+          <nav className="hidden items-center gap-1 md:flex" aria-label="Navegación principal">
+            {links.map(({ href, label, icon: Icon, isActive }) => {
+              const active = isActive(location);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={navLinkClass(active)}
+                  aria-current={active ? "page" : undefined}
+                >
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                  <span>{label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
 
+        <div className="flex items-center gap-2">
           {!isPending && user ? (
-            <div className="pt-2 mt-2 border-t border-slate-200 dark:border-slate-700 space-y-2">
-              <p className="flex items-center space-x-2 px-3 text-sm text-slate-600 dark:text-slate-300 truncate">
-                <User className="h-4 w-4 shrink-0" />
-                <span className="truncate">{user.name || user.email}</span>
-              </p>
-              <Button variant="outline" size="sm" className="w-full" onClick={handleSignOut}>
-                <LogOut className="h-4 w-4" />
-                <span>Cerrar sesión</span>
+            <div className="hidden items-center gap-2 md:flex">
+              <span className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5">
+                <span
+                  className="flex h-6 w-6 items-center justify-center rounded-md bg-secondary text-[11px] font-semibold text-secondary-foreground"
+                  aria-hidden="true"
+                >
+                  {initials}
+                </span>
+                <span className="max-w-[160px] truncate text-sm font-medium text-foreground">
+                  {displayName}
+                </span>
+              </span>
+              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                <LogOut className="h-4 w-4" aria-hidden="true" />
+                <span>Salir</span>
               </Button>
             </div>
           ) : null}
 
           {!isPending && !user ? (
-            <div className="pt-2 mt-2 border-t border-slate-200 dark:border-slate-700">
+            <Button variant="outline" size="sm" asChild className="hidden md:inline-flex">
+              <Link href="/login">
+                <LogIn className="h-4 w-4" aria-hidden="true" />
+                <span>Iniciar sesión</span>
+              </Link>
+            </Button>
+          ) : null}
+
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={toggleTheme}
+            aria-label={theme === "dark" ? "Activar tema claro" : "Activar tema oscuro"}
+            className="h-9 w-9"
+          >
+            {theme === "dark" ? (
+              <Sun className="h-4 w-4" aria-hidden="true" />
+            ) : (
+              <Moon className="h-4 w-4" aria-hidden="true" />
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Mobile navigation */}
+      <nav
+        className="border-t border-border bg-background md:hidden"
+        aria-label="Navegación principal móvil"
+      >
+        <div className="mx-auto max-w-6xl space-y-1 px-4 py-2 sm:px-6">
+          {links.map(({ href, label, icon: Icon, isActive }) => {
+            const active = isActive(location);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={navLinkClass(active, true)}
+                aria-current={active ? "page" : undefined}
+              >
+                <Icon className="h-4 w-4" aria-hidden="true" />
+                <span>{label}</span>
+              </Link>
+            );
+          })}
+
+          <div className="mt-1 space-y-2 border-t border-border pt-2">
+            {!isPending && user ? (
+              <>
+                <p className="flex items-center gap-2 px-3 text-sm text-muted-foreground">
+                  <span
+                    className="flex h-6 w-6 items-center justify-center rounded-md bg-secondary text-[11px] font-semibold text-secondary-foreground"
+                    aria-hidden="true"
+                  >
+                    {initials}
+                  </span>
+                  <span className="truncate">{displayName}</span>
+                </p>
+                <Button variant="outline" size="sm" className="w-full" onClick={handleSignOut}>
+                  <LogOut className="h-4 w-4" aria-hidden="true" />
+                  <span>Cerrar sesión</span>
+                </Button>
+              </>
+            ) : null}
+
+            {!isPending && !user ? (
               <Button variant="outline" size="sm" asChild className="w-full">
                 <Link href="/login">
-                  <LogIn className="h-4 w-4" />
+                  <LogIn className="h-4 w-4" aria-hidden="true" />
                   <span>Iniciar sesión</span>
                 </Link>
               </Button>
-            </div>
-          ) : null}
+            ) : null}
+          </div>
         </div>
-      </div>
+      </nav>
     </header>
   );
 }

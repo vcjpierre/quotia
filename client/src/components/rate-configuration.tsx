@@ -54,7 +54,7 @@ export function RateConfiguration({
                     <div className="flex items-center space-x-2">
                       <span className="font-mono text-sm">{curr.symbol}</span>
                       <span>{curr.code}</span>
-                      <span className="text-slate-500 text-sm">- {curr.name}</span>
+                      <span className="text-sm text-muted-foreground">- {curr.name}</span>
                     </div>
                   </SelectItem>
                 ))}
@@ -67,7 +67,7 @@ export function RateConfiguration({
               Tarifa por hora ({currencySymbol})
             </Label>
             <div className="relative mt-2">
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
                 {currencySymbol}
               </span>
               <Input

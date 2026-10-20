@@ -1,10 +1,10 @@
 import type { ChangeEvent } from "react";
-import { Code2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { type Task } from "@shared/schema";
 import { formatCurrency, type Currency } from "@/lib/currency";
+import { cn } from "@/lib/utils";
 
 interface ReceiptPreviewProps {
   freelancerInfo: {
@@ -62,9 +62,7 @@ function Field({
   if (readOnly) {
     return (
       <div className={className}>
-        {value || (
-          <span className="text-slate-400 dark:text-slate-500">{placeholder}</span>
-        )}
+        {value || <span className="text-muted-foreground">{placeholder}</span>}
       </div>
     );
   }
@@ -95,6 +93,15 @@ function Field({
   );
 }
 
+function initialsOf(name: string) {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word.charAt(0).toUpperCase())
+    .join("");
+}
+
 export function ReceiptPreview({
   freelancerInfo,
   clientInfo,
@@ -111,81 +118,102 @@ export function ReceiptPreview({
 }: ReceiptPreviewProps) {
   const issueDate = issuedAt ? new Date(issuedAt) : new Date();
 
-  const currentDate = issueDate.toLocaleDateString('es-ES', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
+  const currentDate = issueDate.toLocaleDateString("es-ES", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
 
   const quoteNumber =
     reference ?? `QT-${issueDate.getFullYear()}-${String(Date.now()).slice(-6)}`;
 
+  const initials = initialsOf(freelancerInfo.name);
+
   return (
-    <Card className="overflow-hidden">
+    <Card
+      className={cn("overflow-hidden", readOnly && "rounded-none border-0 shadow-none")}
+    >
       {readOnly ? null : (
-        <CardHeader className="bg-slate-50 dark:bg-slate-700 border-b border-slate-200 dark:border-slate-600">
-          <CardTitle>Vista previa del recibo</CardTitle>
+        <CardHeader className="border-b bg-muted/60">
+          <CardTitle>Vista previa del presupuesto</CardTitle>
         </CardHeader>
       )}
 
-      <CardContent id="receipt-content" className="p-6 bg-white dark:bg-slate-800">
-        {/* Receipt Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center space-x-3 mb-4">
-            <div className="bg-primary text-white rounded-lg p-3">
-              <Code2 className="h-8 w-8" />
-            </div>
-            <div className="text-left">
+      <CardContent id="receipt-content" className="bg-card p-6 sm:p-10">
+        {/* Document header: author on the left, document metadata on the right */}
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-4">
+            {initials ? (
+              <div
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-base font-bold text-primary-foreground"
+                aria-hidden="true"
+              >
+                {initials}
+              </div>
+            ) : null}
+            <div className="min-w-0 space-y-1">
               <Field
                 readOnly={readOnly}
                 value={freelancerInfo.name}
                 onChange={(name) => onUpdateFreelancerInfo?.({ name })}
-                className="text-2xl font-bold border-none p-0 h-auto bg-transparent"
+                className="h-auto border-none bg-transparent p-0 text-xl font-bold tracking-tight text-foreground"
                 placeholder="Tu nombre"
               />
               <Field
                 readOnly={readOnly}
                 value={freelancerInfo.title}
                 onChange={(title) => onUpdateFreelancerInfo?.({ title })}
-                className="text-slate-600 dark:text-slate-400 border-none p-0 h-auto bg-transparent"
+                className="h-auto border-none bg-transparent p-0 text-sm text-muted-foreground"
                 placeholder="Tu cargo"
               />
+              <div className="space-y-0.5 pt-1 text-xs text-muted-foreground">
+                <Field
+                  readOnly={readOnly}
+                  value={freelancerInfo.email}
+                  onChange={(email) => onUpdateFreelancerInfo?.({ email })}
+                  className="h-auto border-none bg-transparent p-0 text-xs"
+                  placeholder="tu.correo@ejemplo.com"
+                />
+                <Field
+                  readOnly={readOnly}
+                  value={freelancerInfo.phone}
+                  onChange={(phone) => onUpdateFreelancerInfo?.({ phone })}
+                  className="h-auto border-none bg-transparent p-0 text-xs"
+                  placeholder="+54 11 5555 5555"
+                />
+              </div>
             </div>
           </div>
-          <div className="text-sm text-slate-500 dark:text-slate-400 space-y-1">
-            <Field
-              readOnly={readOnly}
-              value={freelancerInfo.email}
-              onChange={(email) => onUpdateFreelancerInfo?.({ email })}
-              className="text-center border-none p-0 h-auto bg-transparent"
-              placeholder="tu.correo@ejemplo.com"
-            />
-            <Field
-              readOnly={readOnly}
-              value={freelancerInfo.phone}
-              onChange={(phone) => onUpdateFreelancerInfo?.({ phone })}
-              className="text-center border-none p-0 h-auto bg-transparent"
-              placeholder="+1 (555) 123-4567"
-            />
+
+          <div className="sm:text-right">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              Presupuesto
+            </p>
+            <p className="mt-1 text-sm font-semibold tabular text-foreground">{quoteNumber}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{currentDate}</p>
           </div>
         </div>
 
-        {/* Client Info */}
-        <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-700 rounded-lg">
-          <h4 className="font-semibold text-slate-900 dark:text-white mb-2">Facturar a:</h4>
-          <div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
+        <div className="my-8 h-px bg-border" />
+
+        {/* Client */}
+        <div className="rounded-lg border border-border bg-muted/50 px-4 py-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            Preparado para
+          </p>
+          <div className="mt-2 space-y-1">
             <Field
               readOnly={readOnly}
               value={clientInfo.name}
               onChange={(name) => onUpdateClientInfo?.({ name })}
-              className="font-medium text-slate-900 dark:text-white border-none p-0 h-auto bg-transparent"
+              className="h-auto border-none bg-transparent p-0 text-sm font-semibold text-foreground"
               placeholder="Nombre del cliente"
             />
             <Field
               readOnly={readOnly}
               value={clientInfo.address}
               onChange={(address) => onUpdateClientInfo?.({ address })}
-              className="border-none p-0 bg-transparent resize-none"
+              className="resize-none border-none bg-transparent p-0 text-sm text-muted-foreground"
               placeholder="Dirección del cliente"
               multiline
               rows={2}
@@ -193,99 +221,102 @@ export function ReceiptPreview({
           </div>
         </div>
 
-        {/* Quote Details */}
-        <div className="mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h4 className="font-semibold text-slate-900 dark:text-white">Detalles del presupuesto</h4>
-            <div className="text-right text-sm text-slate-500">
-              <p>Presupuesto n.º: <span>{quoteNumber}</span></p>
-              <p>Fecha: <span>{currentDate}</span></p>
-            </div>
-          </div>
-        </div>
-
-        {/* Task Breakdown Table */}
-        <div className="mb-6">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-600">
-                  <th className="text-left py-3 font-semibold text-slate-900 dark:text-white">
-                    Descripción
-                  </th>
-                  <th className="text-right py-3 font-semibold text-slate-900 dark:text-white">
-                    Horas
-                  </th>
-                  <th className="text-right py-3 font-semibold text-slate-900 dark:text-white">
-                    Tarifa
-                  </th>
-                  <th className="text-right py-3 font-semibold text-slate-900 dark:text-white">
-                    Importe
-                  </th>
+        {/* Task breakdown */}
+        <div className="mt-8 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border">
+                <th
+                  scope="col"
+                  className="py-3 pr-4 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground"
+                >
+                  Descripción
+                </th>
+                <th
+                  scope="col"
+                  className="py-3 text-right text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground"
+                >
+                  Horas
+                </th>
+                <th
+                  scope="col"
+                  className="py-3 text-right text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground"
+                >
+                  Tarifa
+                </th>
+                <th
+                  scope="col"
+                  className="py-3 text-right text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground"
+                >
+                  Importe
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {tasks.map((task) => (
+                <tr key={task.id}>
+                  <td className="py-3 pr-4 text-foreground">{task.description}</td>
+                  <td className="py-3 text-right tabular text-muted-foreground">{task.hours}</td>
+                  <td className="py-3 text-right tabular text-muted-foreground">
+                    {task.hours > 0 ? formatCurrency(task.cost / task.hours, currency) : "—"}
+                  </td>
+                  <td className="py-3 text-right font-semibold tabular text-foreground">
+                    {formatCurrency(task.cost, currency)}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-600">
-                {tasks.map((task) => (
-                  <tr key={task.id}>
-                    <td className="py-3 text-slate-900 dark:text-white">
-                      {task.description}
-                    </td>
-                    <td className="py-3 text-right text-slate-600 dark:text-slate-400">
-                      {task.hours}
-                    </td>
-                    <td className="py-3 text-right text-slate-600 dark:text-slate-400">
-                      {formatCurrency(task.cost / task.hours, currency)}
-                    </td>
-                    <td className="py-3 text-right font-semibold text-slate-900 dark:text-white">
-                      {formatCurrency(task.cost, currency)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {tasks.length === 0 && (
-            <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-              <p>Aún no hay tareas agregadas.</p>
-            </div>
-          )}
+              ))}
+            </tbody>
+          </table>
         </div>
+
+        {tasks.length === 0 ? (
+          <div className="py-10 text-center text-sm text-muted-foreground">
+            Aún no hay tareas agregadas.
+          </div>
+        ) : null}
 
         {/* Totals */}
-        <div className="border-t border-slate-200 dark:border-slate-600 pt-4">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-slate-600 dark:text-slate-400">Subtotal:</span>
-            <span className="font-semibold text-slate-900 dark:text-white">
-              {formatCurrency(summary.subtotal, currency)}
-            </span>
-          </div>
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-slate-600 dark:text-slate-400">Impuestos (0%):</span>
-            <span className="font-semibold text-slate-900 dark:text-white">
-              {formatCurrency(summary.tax, currency)}
-            </span>
-          </div>
-          <div className="flex justify-between items-center text-lg font-bold text-accent bg-accent/5 rounded-lg p-4">
-            <span>Total:</span>
-            <span>{formatCurrency(summary.total, currency)}</span>
+        <div className="mt-6 flex justify-end">
+          <div className="w-full space-y-2 sm:w-80">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Subtotal</span>
+              <span className="font-medium tabular text-foreground">
+                {formatCurrency(summary.subtotal, currency)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Impuestos</span>
+              <span className="font-medium tabular text-foreground">
+                {formatCurrency(summary.tax, currency)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg bg-foreground px-4 py-3 text-background">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] opacity-80">
+                Total
+              </span>
+              <span className="text-xl font-bold tabular">
+                {formatCurrency(summary.total, currency)}
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Terms */}
-        <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-600">
-          <h4 className="font-semibold text-slate-900 dark:text-white mb-3">
+        <div className="mt-8 border-t border-border pt-6">
+          <h4 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             Términos y condiciones
           </h4>
-          <Field
-            readOnly={readOnly}
-            value={terms}
-            onChange={(value) => onUpdateTerms?.(value)}
-            className="text-sm text-slate-600 dark:text-slate-400 bg-transparent border-none p-0 resize-none whitespace-pre-line"
-            placeholder="Ingresa los términos y condiciones..."
-            multiline
-            rows={4}
-          />
+          <div className="mt-3">
+            <Field
+              readOnly={readOnly}
+              value={terms}
+              onChange={(value) => onUpdateTerms?.(value)}
+              className="resize-none whitespace-pre-line border-none bg-transparent p-0 text-sm text-muted-foreground"
+              placeholder="Ingresá los términos y condiciones..."
+              multiline
+              rows={4}
+            />
+          </div>
         </div>
       </CardContent>
     </Card>

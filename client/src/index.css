@@ -1,67 +1,98 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: hsl(0, 0%, 100%);
-  --foreground: hsl(220, 14.3%, 4.1%);
-  --muted: hsl(210, 40%, 98%);
-  --muted-foreground: hsl(215, 16%, 47%);
-  --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(220, 14.3%, 4.1%);
-  --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(220, 14.3%, 4.1%);
-  --border: hsl(220, 13%, 91%);
-  --input: hsl(220, 13%, 91%);
-  --primary: hsl(207, 90%, 54%);
-  --primary-foreground: hsl(210, 40%, 98%);
-  --secondary: hsl(210, 40%, 96%);
-  --secondary-foreground: hsl(220, 9%, 46%);
-  --accent: hsl(142, 76%, 36%);
-  --accent-foreground: hsl(355, 7%, 97%);
-  --destructive: hsl(0, 84%, 60%);
-  --destructive-foreground: hsl(210, 40%, 98%);
-  --ring: hsl(207, 90%, 54%);
-  --radius: 0.5rem;
-}
-
-.dark {
-  --background: hsl(220, 13%, 9%);
-  --foreground: hsl(210, 40%, 98%);
-  --muted: hsl(220, 14%, 14%);
-  --muted-foreground: hsl(215, 16%, 57%);
-  --popover: hsl(220, 13%, 9%);
-  --popover-foreground: hsl(210, 40%, 98%);
-  --card: hsl(220, 13%, 9%);
-  --card-foreground: hsl(210, 40%, 98%);
-  --border: hsl(220, 14%, 14%);
-  --input: hsl(220, 14%, 14%);
-  --primary: hsl(207, 90%, 54%);
-  --primary-foreground: hsl(210, 40%, 98%);
-  --secondary: hsl(220, 14%, 14%);
-  --secondary-foreground: hsl(210, 40%, 98%);
-  --accent: hsl(142, 76%, 36%);
-  --accent-foreground: hsl(355, 7%, 97%);
-  --destructive: hsl(0, 63%, 31%);
-  --destructive-foreground: hsl(210, 40%, 98%);
-  --ring: hsl(207, 90%, 54%);
-}
-
 @layer base {
+  :root {
+    --background: hsl(210 40% 98%);
+    --foreground: hsl(217 33% 17%);
+    --card: hsl(0 0% 100%);
+    --card-foreground: hsl(217 33% 17%);
+    --popover: hsl(0 0% 100%);
+    --popover-foreground: hsl(217 33% 17%);
+    --primary: hsl(221 83% 53%);
+    --primary-foreground: hsl(0 0% 100%);
+    --secondary: hsl(214 32% 96%);
+    --secondary-foreground: hsl(217 33% 17%);
+    --muted: hsl(216 52% 94%);
+    --muted-foreground: hsl(215 19% 34%);
+    --accent: hsl(214 32% 95%);
+    --accent-foreground: hsl(217 33% 17%);
+    --cta: hsl(17 88% 40%);
+    --cta-foreground: hsl(0 0% 100%);
+    --destructive: hsl(0 72% 51%);
+    --destructive-foreground: hsl(0 0% 100%);
+    --border: hsl(214 32% 91%);
+    --input: hsl(214 32% 91%);
+    --ring: hsl(221 83% 53%);
+    --radius: 0.75rem;
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+
+  .dark {
+    --background: hsl(222 47% 8%);
+    --foreground: hsl(210 40% 98%);
+    --card: hsl(222 44% 11%);
+    --card-foreground: hsl(210 40% 98%);
+    --popover: hsl(222 44% 11%);
+    --popover-foreground: hsl(210 40% 98%);
+    --primary: hsl(217 91% 60%);
+    --primary-foreground: hsl(222 47% 8%);
+    --secondary: hsl(217 33% 17%);
+    --secondary-foreground: hsl(210 40% 98%);
+    --muted: hsl(217 33% 15%);
+    --muted-foreground: hsl(215 20% 68%);
+    --accent: hsl(217 33% 17%);
+    --accent-foreground: hsl(210 40% 98%);
+    --cta: hsl(21 90% 55%);
+    --cta-foreground: hsl(20 100% 6%);
+    --destructive: hsl(0 72% 55%);
+    --destructive-foreground: hsl(0 0% 100%);
+    --border: hsl(215 28% 19%);
+    --input: hsl(215 28% 19%);
+    --ring: hsl(217 91% 60%);
+  }
+
   * {
     @apply border-border;
   }
 
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
-    @apply font-inter antialiased bg-background text-foreground;
-    font-family: 'Inter', system-ui, sans-serif;
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply tracking-tight;
+  }
+
+  ::selection {
+    background: hsl(221 83% 53% / 0.18);
   }
 }
 
 @layer utilities {
-  .font-inter {
-    font-family: 'Inter', system-ui, sans-serif;
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up {
+    animation: none !important;
   }
 }

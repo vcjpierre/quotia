@@ -16,6 +16,9 @@ interface TaskManagementProps {
   onLoadTemplate: (template: "website" | "mobile" | "consulting") => void;
 }
 
+const templateButtonClass =
+  "flex h-auto items-center justify-start gap-3 rounded-lg border-border bg-muted/40 p-4 text-left hover:bg-muted hover:text-foreground";
+
 export function TaskManagement({
   tasks,
   currency,
@@ -36,16 +39,16 @@ export function TaskManagement({
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center space-x-3">
-              <div className="bg-accent/10 text-accent rounded-lg p-2">
-                <ListChecks className="h-5 w-5" />
-              </div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle className="flex items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <ListChecks className="h-5 w-5" aria-hidden="true" />
+              </span>
               <span>Tareas del proyecto</span>
             </CardTitle>
-            
-            <Button onClick={handleAddTask} className="flex items-center space-x-2">
-              <Plus className="h-4 w-4" />
+
+            <Button onClick={handleAddTask} className="gap-2">
+              <Plus className="h-4 w-4" aria-hidden="true" />
               <span>Agregar tarea</span>
             </Button>
           </div>
@@ -55,20 +58,22 @@ export function TaskManagement({
             {tasks.map((task) => (
               <div
                 key={task.id}
-                className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4 border border-slate-200 dark:border-slate-600"
+                className="rounded-lg border border-border bg-muted/40 p-4"
               >
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-12">
                   <div className="lg:col-span-4">
-                    <Label className="text-sm font-medium">Descripción de la tarea</Label>
+                    <Label className="text-xs font-medium text-muted-foreground">
+                      Descripción de la tarea
+                    </Label>
                     <Input
                       value={task.description}
                       onChange={(e) => onUpdateTask(task.id, { description: e.target.value })}
                       className="mt-2 text-sm"
                     />
                   </div>
-                  
+
                   <div className="lg:col-span-2">
-                    <Label className="text-sm font-medium">Tipo</Label>
+                    <Label className="text-xs font-medium text-muted-foreground">Tipo</Label>
                     <Select
                       value={task.type}
                       onValueChange={(value: "project" | "feature" | "microtask") =>
@@ -85,10 +90,10 @@ export function TaskManagement({
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="lg:col-span-2">
-                    <Label className="text-sm font-medium">Duración</Label>
-                    <div className="flex items-center space-x-2 mt-2">
+                    <Label className="text-xs font-medium text-muted-foreground">Duración</Label>
+                    <div className="mt-2 flex items-center gap-2">
                       <Input
                         type="number"
                         min="0.1"
@@ -97,23 +102,24 @@ export function TaskManagement({
                         onChange={(e) => onUpdateTask(task.id, { hours: Number(e.target.value) })}
                         className="text-sm"
                       />
-                      <span className="text-xs text-slate-500 dark:text-slate-400">h</span>
+                      <span className="text-xs text-muted-foreground">h</span>
                     </div>
                   </div>
-                  
+
                   <div className="lg:col-span-3">
-                    <Label className="text-sm font-medium">Costo</Label>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-lg font-semibold text-slate-900 dark:text-white">
+                    <Label className="text-xs font-medium text-muted-foreground">Costo</Label>
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-lg font-semibold tabular text-foreground">
                         {formatCurrency(task.cost, currency)}
                       </span>
                       <Button
                         variant="ghost"
                         size="sm"
+                        aria-label={`Eliminar ${task.description}`}
                         onClick={() => onRemoveTask(task.id)}
-                        className="text-red-500 hover:text-red-700 p-1"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </div>
                   </div>
@@ -122,9 +128,11 @@ export function TaskManagement({
             ))}
 
             {tasks.length === 0 && (
-              <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-                <ListChecks className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Aún no hay tareas. Haz clic en "Agregar tarea" para empezar.</p>
+              <div className="py-10 text-center text-muted-foreground">
+                <ListChecks className="mx-auto mb-4 h-10 w-10 opacity-40" aria-hidden="true" />
+                <p className="text-sm">
+                  Aún no hay tareas. Hacé clic en "Agregar tarea" para empezar.
+                </p>
               </div>
             )}
           </div>
@@ -133,33 +141,36 @@ export function TaskManagement({
 
       {/* Quick Actions */}
       <Card>
-        <CardHeader>
-          <CardTitle>Acciones rápidas</CardTitle>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Acciones rápidas</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Cargá una plantilla con tareas típicas y ajustala a tu proyecto.
+          </p>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <CardContent className="pt-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Button
               variant="outline"
               onClick={() => onLoadTemplate("website")}
-              className="flex items-center space-x-3 p-4 h-auto bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30"
+              className={templateButtonClass}
             >
-              <Globe className="h-5 w-5" />
+              <Globe className="h-5 w-5 text-primary" aria-hidden="true" />
               <span className="font-medium">Proyecto web</span>
             </Button>
             <Button
               variant="outline"
               onClick={() => onLoadTemplate("mobile")}
-              className="flex items-center space-x-3 p-4 h-auto bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/30"
+              className={templateButtonClass}
             >
-              <Smartphone className="h-5 w-5" />
+              <Smartphone className="h-5 w-5 text-primary" aria-hidden="true" />
               <span className="font-medium">App móvil</span>
             </Button>
             <Button
               variant="outline"
               onClick={() => onLoadTemplate("consulting")}
-              className="flex items-center space-x-3 p-4 h-auto bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/30"
+              className={templateButtonClass}
             >
-              <Lightbulb className="h-5 w-5" />
+              <Lightbulb className="h-5 w-5 text-primary" aria-hidden="true" />
               <span className="font-medium">Consultoría</span>
             </Button>
           </div>

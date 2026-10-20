@@ -1,7 +1,6 @@
 import { TrendingUp, FileText, Share } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { formatCurrency, type Currency } from "@/lib/currency";
 
 interface CostSummaryProps {
@@ -19,78 +18,55 @@ interface CostSummaryProps {
 }
 
 export function CostSummary({ summary, currency, onExportPDF, onShare }: CostSummaryProps) {
-
   return (
-    <Card className="top-6">
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-3">
-          <div className="bg-accent/10 text-accent rounded-lg p-2">
-            <TrendingUp className="h-5 w-5" />
-          </div>
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-3">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <TrendingUp className="h-5 w-5" aria-hidden="true" />
+          </span>
           <span>Resumen de costos</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Summary Stats */}
-        <div className="space-y-4">
-          <div className="flex justify-between items-center py-2">
-            <span className="text-slate-600 dark:text-slate-400">Horas totales</span>
-            <span className="font-semibold text-slate-900 dark:text-white">
-              {summary.totalHours} h
-            </span>
+
+      <CardContent className="space-y-6 pt-4">
+        <dl className="space-y-3 text-sm">
+          <div className="flex items-center justify-between">
+            <dt className="text-muted-foreground">Horas totales</dt>
+            <dd className="font-medium tabular text-foreground">{summary.totalHours} h</dd>
           </div>
-          <Separator />
-          <div className="flex justify-between items-center py-2">
-            <span className="text-slate-600 dark:text-slate-400">Días totales</span>
-            <span className="font-semibold text-slate-900 dark:text-white">
-              {summary.totalDays} días
-            </span>
+          <div className="flex items-center justify-between">
+            <dt className="text-muted-foreground">Días totales</dt>
+            <dd className="font-medium tabular text-foreground">{summary.totalDays} días</dd>
           </div>
-          <Separator />
-          <div className="flex justify-between items-center py-2">
-            <span className="text-slate-600 dark:text-slate-400">Tarifa por hora</span>
-            <span className="font-semibold text-slate-900 dark:text-white">
+          <div className="flex items-center justify-between">
+            <dt className="text-muted-foreground">Tarifa por hora</dt>
+            <dd className="font-medium tabular text-foreground">
               {formatCurrency(summary.hourlyRate, currency)}/h
-            </span>
+            </dd>
           </div>
-          <Separator />
-          <div className="flex justify-between items-center py-3 bg-accent/5 rounded-lg px-4">
-            <span className="text-lg font-semibold text-slate-900 dark:text-white">
+        </dl>
+
+        <div className="rounded-xl bg-foreground px-4 py-4 text-background">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] opacity-80">
               Costo total
             </span>
-            <span className="text-2xl font-bold text-accent">
+            <span className="text-2xl font-bold tabular">
               {formatCurrency(summary.total, currency)}
             </span>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="space-y-3">
-          <Button
-            onClick={() => {}}
-            className="w-full flex items-center justify-center space-x-2 font-medium"
-          >
-            <FileText className="h-4 w-4" />
-            <span>Generar recibo</span>
+        <div className="grid grid-cols-2 gap-3">
+          <Button variant="outline" onClick={onExportPDF}>
+            <FileText className="h-4 w-4" aria-hidden="true" />
+            <span>PDF</span>
           </Button>
-          
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              onClick={onExportPDF}
-              variant="destructive"
-              className="flex items-center justify-center space-x-2"
-            >
-              <FileText className="h-4 w-4" />
-              <span className="text-sm">PDF</span>
-            </Button>
-            <Button
-              onClick={onShare}
-              className="flex items-center justify-center space-x-2 bg-green-500 hover:bg-green-600"
-            >
-              <Share className="h-4 w-4" />
-              <span className="text-sm">Compartir</span>
-            </Button>
-          </div>
+          <Button onClick={onShare}>
+            <Share className="h-4 w-4" aria-hidden="true" />
+            <span>Compartir</span>
+          </Button>
         </div>
       </CardContent>
     </Card>
