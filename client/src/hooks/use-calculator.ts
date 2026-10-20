@@ -1,26 +1,15 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { type Quote, type Task } from "@shared/schema";
 import { type Currency } from "@/lib/currency";
 import { nanoid } from "nanoid";
+import {
+  clearDraft,
+  readDraft,
+  writeDraft,
+  type CalculatorState,
+} from "@/lib/calculator-draft";
 
-export interface CalculatorState {
-  hourlyRate: number;
-  hoursPerDay: number;
-  currency: Currency;
-  tasks: Task[];
-  freelancerInfo: {
-    name: string;
-    title: string;
-    email: string;
-    phone: string;
-  };
-  clientInfo: {
-    name: string;
-    email: string;
-    address: string;
-  };
-  terms: string;
-}
+export type { CalculatorState };
 
 const defaultFreelancerInfo = {
   name: "Tu nombre",
@@ -40,16 +29,104 @@ const defaultTerms = `• Se requiere un anticipo del 50% para comenzar el traba
 • Condiciones de pago: 30 días netos
 • El presupuesto es válido por 30 días desde la fecha de emisión`;
 
-export function useCalculator() {
-  const [state, setState] = useState<CalculatorState>({
-    hourlyRate: 75,
-    hoursPerDay: 8,
-    currency: "USD",
-    tasks: [],
-    freelancerInfo: defaultFreelancerInfo,
-    clientInfo: defaultClientInfo,
-    terms: defaultTerms,
+export const DEFAULT_CALCULATOR_STATE: CalculatorState = {
+  hourlyRate: 75,
+  hoursPerDay: 8,
+  currency: "USD",
+  tasks: [],
+  freelancerInfo: defaultFreelancerInfo,
+  clientInfo: defaultClientInfo,
+  terms: defaultTerms,
+};
+
+function areTasksEqual(a: Task[], b: Task[]): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  return a.every((task, index) => {
+    const other = b[index];
+    return (
+      task.id === other.id &&
+      task.description === other.description &&
+      task.type === other.type &&
+      task.hours === other.hours &&
+      task.cost === other.cost
+    );
   });
+}
+
+export function isPristineState(state: CalculatorState): boolean {
+  const defaults = DEFAULT_CALCULATOR_STATE;
+  return (
+    state.hourlyRate === defaults.hourlyRate &&
+    state.hoursPerDay === defaults.hoursPerDay &&
+    state.currency === defaults.currency &&
+    state.terms === defaults.terms &&
+    state.freelancerInfo.name === defaults.freelancerInfo.name &&
+    state.freelancerInfo.title === defaults.freelancerInfo.title &&
+    state.freelancerInfo.email === defaults.freelancerInfo.email &&
+    state.freelancerInfo.phone === defaults.freelancerInfo.phone &&
+    state.clientInfo.name === defaults.clientInfo.name &&
+    state.clientInfo.email === defaults.clientInfo.email &&
+    state.clientInfo.address === defaults.clientInfo.address &&
+    areTasksEqual(state.tasks, defaults.tasks)
+  );
+}
+
+export interface UseCalculatorOptions {
+  persistDraft?: boolean;
+}
+
+export function useCalculator(options: UseCalculatorOptions = {}) {
+  const persistDraft = options.persistDraft ?? false;
+
+  // Options are mount-time config. A quote switch can reuse this component
+  // instance, and an already loaded quote must never become a draft.
+  const mountedWithDraftPersistence = useRef(persistDraft).current;
+  const draftPersistenceEnabled = persistDraft && mountedWithDraftPersistence;
+
+  // Read the stored draft once, lazily, so the first render already shows the
+  // restored values and never overwrites the draft with defaults.
+  const [initialSnapshot] = useState<{
+    state: CalculatorState;
+    restored: boolean;
+  }>(() => {
+    if (!persistDraft) {
+      return { state: DEFAULT_CALCULATOR_STATE, restored: false };
+    }
+    const draft = readDraft();
+    return {
+      state: draft ?? DEFAULT_CALCULATOR_STATE,
+      restored: draft !== null,
+    };
+  });
+
+  const [state, setState] = useState<CalculatorState>(initialSnapshot.state);
+  const restoredDraft = initialSnapshot.restored;
+
+  const stateRef = useRef(state);
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
+  useEffect(() => {
+    if (!draftPersistenceEnabled) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      if (isPristineState(state)) {
+        // An untouched form should not resurrect as a "restored" draft.
+        clearDraft();
+        return;
+      }
+      writeDraft(state);
+    }, 400);
+
+    return () => clearTimeout(timeout);
+  }, [state, draftPersistenceEnabled]);
 
   const addTask = useCallback((taskData: Omit<Task, "id" | "cost">) => {
     setState(prev => {
@@ -186,6 +263,31 @@ export function useCalculator() {
     });
   }, []);
 
+  const flushDraft = useCallback(() => {
+    if (!draftPersistenceEnabled) {
+      return;
+    }
+
+    const current = stateRef.current;
+    if (isPristineState(current)) {
+      clearDraft();
+      return;
+    }
+    writeDraft(current);
+  }, [draftPersistenceEnabled]);
+
+  const clearPersistedDraft = useCallback(() => {
+    if (!draftPersistenceEnabled) {
+      return;
+    }
+    clearDraft();
+  }, [draftPersistenceEnabled]);
+
+  const discardDraft = useCallback(() => {
+    setState(DEFAULT_CALCULATOR_STATE);
+    clearDraft();
+  }, []);
+
   const summary = useMemo(() => {
     const totalHours = state.tasks.reduce((sum, task) => sum + task.hours, 0);
     const totalDays = Math.round((totalHours / state.hoursPerDay) * 100) / 100;
@@ -217,5 +319,9 @@ export function useCalculator() {
     updateTerms,
     loadTemplate,
     loadQuote,
+    restoredDraft,
+    flushDraft,
+    discardDraft,
+    clearDraft: clearPersistedDraft,
   };
 }

@@ -18,7 +18,6 @@ import { insertQuoteSchema, type Quote } from "@shared/schema";
 
 export default function CalculatorPage() {
   const { toast } = useToast();
-  const calculator = useCalculator();
   const queryClient = useQueryClient();
   const { isAuthenticated, isPending: isAuthPending } = useAuth();
   const [currentPath, navigate] = useLocation();
@@ -33,6 +32,11 @@ export default function CalculatorPage() {
     parsedQuoteId > 0
       ? parsedQuoteId
       : null;
+
+  // Drafts only apply to brand-new quotes. Editing an existing quote must never
+  // read or clobber the draft, and the draft must never clobber a loaded quote.
+  const calculator = useCalculator({ persistDraft: quoteId === null });
+
   const returnPath = search ? `${currentPath}?${search}` : currentPath;
 
   const {
@@ -50,8 +54,21 @@ export default function CalculatorPage() {
   const loadedQuoteIdRef = useRef<number | null>(null);
   const quoteTitleRef = useRef<string | null>(null);
   const loadErrorHandledRef = useRef(false);
+  const restoredDraftToastShownRef = useRef(false);
 
   const { loadQuote } = calculator;
+
+  useEffect(() => {
+    if (!calculator.restoredDraft || restoredDraftToastShownRef.current) {
+      return;
+    }
+    restoredDraftToastShownRef.current = true;
+    toast({
+      title: "Recuperamos tu borrador",
+      description:
+        "Seguimos donde lo dejaste; guardalo cuando tengas sesión iniciada.",
+    });
+  }, [calculator.restoredDraft, toast]);
 
   useEffect(() => {
     setLoadedQuoteId(null);
@@ -130,6 +147,8 @@ export default function CalculatorPage() {
       });
 
       if (!isEditReady) {
+        // A saved quote must not come back as a draft on the next visit.
+        calculator.clearDraft();
         // Keep the freshly saved quote in the URL so "Compartir" has a stable id
         // to point at instead of an unsaved draft.
         navigate(`/calculator?quote=${quote.id}`);
@@ -154,6 +173,8 @@ export default function CalculatorPage() {
         title: "Iniciá sesión para guardar el presupuesto",
         description: "Tus presupuestos se guardan en tu cuenta.",
       });
+      // Write synchronously so the pending debounce cannot drop the last stroke.
+      calculator.flushDraft();
       navigate(`/login?redirect=${encodeURIComponent(returnPath)}`);
       return;
     }
