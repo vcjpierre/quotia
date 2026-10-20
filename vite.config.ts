@@ -45,6 +45,8 @@ export async function createViteConfig({
     build: {
       outDir: path.resolve(projectRoot, "dist/public"),
       emptyOutDir: true,
+      sourcemap: false,
+      minify: false,
     },
     server: {
       fs: {
