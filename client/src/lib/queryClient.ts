@@ -69,11 +69,45 @@ async function fetchWithAuth(url: string, init: RequestInit): Promise<Response> 
   });
 }
 
+function isJsonResponse(res: Response): boolean {
+  return (res.headers.get("content-type") ?? "").includes("application/json");
+}
+
+/**
+ * A static build served without the API (for example `vite preview`) answers
+ * `/api/*` with the SPA shell. Without this guard the only symptom is a cryptic
+ * "Unexpected token '<'" and a generic error card.
+ */
+function nonJsonError(): Error {
+  return new Error(
+    "El servidor devolvió una respuesta inesperada. Si estás en desarrollo, verificá que la API esté corriendo (npm run dev).",
+  );
+}
+
 async function throwIfResNotOk(res: Response) {
-  if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+  if (res.ok) {
+    return;
   }
+
+  let detail = res.statusText;
+
+  if (isJsonResponse(res)) {
+    try {
+      const body: unknown = await res.json();
+      if (
+        typeof body === "object" &&
+        body !== null &&
+        "message" in body &&
+        typeof (body as { message?: unknown }).message === "string"
+      ) {
+        detail = (body as { message: string }).message;
+      }
+    } catch {
+      // Keep the status text when the body cannot be parsed.
+    }
+  }
+
+  throw new Error(`${res.status}: ${detail}`);
 }
 
 export async function apiRequest(
@@ -107,6 +141,11 @@ export const getQueryFn: <T>(options: {
     }
 
     await throwIfResNotOk(res);
+
+    if (!isJsonResponse(res)) {
+      throw nonJsonError();
+    }
+
     return await res.json();
   };
 
@@ -115,8 +154,12 @@ export const queryClient = new QueryClient({
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
-      refetchOnWindowFocus: false,
-      staleTime: Infinity,
+      // Lists used to go stale never, so a cached empty result survived the
+      // whole SPA session. A short window keeps navigation instant while still
+      // picking up changes made in another tab.
+      staleTime: 30_000,
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
       retry: false,
     },
     mutations: {

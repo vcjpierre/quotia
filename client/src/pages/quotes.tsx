@@ -183,10 +183,10 @@ export default function QuotesPage() {
               <h3 className="mt-5 text-base font-semibold text-foreground">
                 No se pudieron cargar los presupuestos
               </h3>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
                 {isUnauthorized
                   ? "Tu sesión expiró. Iniciá sesión nuevamente."
-                  : "Volvé a intentarlo en unos instantes."}
+                  : quotesError.message}
               </p>
               <div className="mt-5 flex flex-wrap justify-center gap-2">
                 <Button variant="outline" onClick={() => void refetchQuotes()}>

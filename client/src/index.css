@@ -55,12 +55,44 @@
     --ring: hsl(217 91% 60%);
   }
 
+  /*
+   * "Paper" scope for the printable quote document. It re-declares every
+   * light-mode token so the document stays white and readable even when it is
+   * rendered inside a `.dark` subtree (the export root lives in the live app).
+   */
+  .force-light {
+    color-scheme: light;
+
+    --background: hsl(210 40% 98%);
+    --foreground: hsl(217 33% 17%);
+    --card: hsl(0 0% 100%);
+    --card-foreground: hsl(217 33% 17%);
+    --popover: hsl(0 0% 100%);
+    --popover-foreground: hsl(217 33% 17%);
+    --primary: hsl(221 83% 53%);
+    --primary-foreground: hsl(0 0% 100%);
+    --secondary: hsl(214 32% 96%);
+    --secondary-foreground: hsl(217 33% 17%);
+    --muted: hsl(216 52% 94%);
+    --muted-foreground: hsl(215 19% 34%);
+    --accent: hsl(214 32% 95%);
+    --accent-foreground: hsl(217 33% 17%);
+    --cta: hsl(17 88% 40%);
+    --cta-foreground: hsl(0 0% 100%);
+    --destructive: hsl(0 72% 51%);
+    --destructive-foreground: hsl(0 0% 100%);
+    --border: hsl(214 32% 91%);
+    --input: hsl(214 32% 91%);
+    --ring: hsl(221 83% 53%);
+  }
+
   * {
     @apply border-border;
   }
 
   html {
     -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {

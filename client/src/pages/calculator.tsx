@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Save } from "lucide-react";
 import { useLocation, useSearch } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -11,6 +11,7 @@ import { RateConfiguration } from "@/components/rate-configuration";
 import { TaskManagement } from "@/components/task-management";
 import { CostSummary } from "@/components/cost-summary";
 import { ReceiptPreview } from "@/components/receipt-preview";
+import { QuoteDocument } from "@/components/quote-document";
 import { exportToPDF } from "@/lib/pdf-export";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { buildShareUrl, copyShareUrl } from "@/lib/share";
@@ -22,6 +23,15 @@ export default function CalculatorPage() {
   const { isAuthenticated, isPending: isAuthPending } = useAuth();
   const [currentPath, navigate] = useLocation();
   const search = useSearch();
+
+  // The quote number and issue date must stay identical between the on-screen
+  // preview and the exported PDF, so they are fixed for the page lifetime.
+  const issuedAtRef = useRef<Date>(new Date());
+  const documentRef = useMemo(() => {
+    const issuedAt = issuedAtRef.current;
+    const suffix = Math.random().toString(36).slice(2, 8).toUpperCase();
+    return `QT-${issuedAt.getFullYear()}-${suffix}`;
+  }, []);
 
   const quoteParam = new URLSearchParams(search).get("quote");
   const parsedQuoteId =
@@ -193,7 +203,7 @@ export default function CalculatorPage() {
 
   const handleExportPDF = async () => {
     try {
-      await exportToPDF("receipt-content", `freelance-quote-${Date.now()}`);
+      await exportToPDF("pdf-root", `freelance-quote-${documentRef}`);
       toast({
         title: "¡PDF exportado con éxito!",
         description: "Tu presupuesto se guardó como archivo PDF.",
@@ -387,10 +397,37 @@ export default function CalculatorPage() {
               onUpdateFreelancerInfo={calculator.updateFreelancerInfo}
               onUpdateClientInfo={calculator.updateClientInfo}
               onUpdateTerms={calculator.updateTerms}
+              reference={documentRef}
+              issuedAt={issuedAtRef.current}
+              compact
             />
           </div>
         </div>
       </main>
+
+      {/* Static document captured by the PDF export; never shown on screen. */}
+      <div
+        id="pdf-root"
+        aria-hidden="true"
+        style={{
+          position: "fixed",
+          left: -10000,
+          top: 0,
+          width: 794,
+          pointerEvents: "none",
+        }}
+      >
+        <QuoteDocument
+          freelancerInfo={calculator.state.freelancerInfo}
+          clientInfo={calculator.state.clientInfo}
+          tasks={calculator.state.tasks}
+          summary={calculator.summary}
+          currency={calculator.state.currency}
+          terms={calculator.state.terms}
+          reference={documentRef}
+          issuedAt={issuedAtRef.current}
+        />
+      </div>
     </div>
   );
 }

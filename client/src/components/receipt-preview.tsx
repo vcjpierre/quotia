@@ -38,6 +38,12 @@ interface ReceiptPreviewProps {
   reference?: string;
   /** Issue date to display; defaults to today. */
   issuedAt?: string | Date;
+  /**
+   * Stacks the document header vertically regardless of the viewport. The
+   * calculator renders this document inside a narrow sidebar column, where
+   * viewport breakpoints would keep it in a cramped row.
+   */
+  compact?: boolean;
 }
 
 interface FieldProps {
@@ -115,6 +121,7 @@ export function ReceiptPreview({
   readOnly = false,
   reference,
   issuedAt,
+  compact = false,
 }: ReceiptPreviewProps) {
   const issueDate = issuedAt ? new Date(issuedAt) : new Date();
 
@@ -129,6 +136,19 @@ export function ReceiptPreview({
 
   const initials = initialsOf(freelancerInfo.name);
 
+  // The calculator renders this document in a narrow sidebar column, so the
+  // compact variant tightens the table instead of letting columns collide.
+  const headCell = cn(
+    "text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground",
+    compact
+      ? "whitespace-nowrap px-0.5 py-2.5 text-[10px] tracking-normal first:pl-0 last:pr-0"
+      : "py-3 first:pl-0 last:pr-0",
+  );
+  const bodyCell = cn(
+    compact ? "px-0.5 py-2.5 text-[11px] first:pl-0 last:pr-0" : "py-3 first:pl-0 last:pr-0",
+  );
+  const numberCell = cn(bodyCell, "whitespace-nowrap text-right tabular text-muted-foreground");
+
   return (
     <Card
       className={cn("overflow-hidden", readOnly && "rounded-none border-0 shadow-none")}
@@ -139,10 +159,16 @@ export function ReceiptPreview({
         </CardHeader>
       )}
 
-      <CardContent id="receipt-content" className="bg-card p-6 sm:p-10">
+      <CardContent id="receipt-content" className="force-light bg-card p-6 sm:p-10">
         {/* Document header: author on the left, document metadata on the right */}
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-start gap-4">
+        <div
+          className={cn(
+            compact
+              ? "flex flex-col gap-4"
+              : "flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between",
+          )}
+        >
+          <div className="flex min-w-0 items-start gap-4">
             {initials ? (
               <div
                 className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-base font-bold text-primary-foreground"
@@ -151,19 +177,19 @@ export function ReceiptPreview({
                 {initials}
               </div>
             ) : null}
-            <div className="min-w-0 space-y-1">
+            <div className="min-w-0 flex-1 space-y-1">
               <Field
                 readOnly={readOnly}
                 value={freelancerInfo.name}
                 onChange={(name) => onUpdateFreelancerInfo?.({ name })}
-                className="h-auto border-none bg-transparent p-0 text-xl font-bold tracking-tight text-foreground"
+                className="h-auto w-full min-w-0 border-none bg-transparent p-0 text-xl font-bold tracking-tight text-foreground"
                 placeholder="Tu nombre"
               />
               <Field
                 readOnly={readOnly}
                 value={freelancerInfo.title}
                 onChange={(title) => onUpdateFreelancerInfo?.({ title })}
-                className="h-auto border-none bg-transparent p-0 text-sm text-muted-foreground"
+                className="h-auto w-full min-w-0 border-none bg-transparent p-0 text-sm text-muted-foreground"
                 placeholder="Tu cargo"
               />
               <div className="space-y-0.5 pt-1 text-xs text-muted-foreground">
@@ -171,26 +197,28 @@ export function ReceiptPreview({
                   readOnly={readOnly}
                   value={freelancerInfo.email}
                   onChange={(email) => onUpdateFreelancerInfo?.({ email })}
-                  className="h-auto border-none bg-transparent p-0 text-xs"
+                  className="h-auto w-full min-w-0 border-none bg-transparent p-0 text-xs"
                   placeholder="tu.correo@ejemplo.com"
                 />
                 <Field
                   readOnly={readOnly}
                   value={freelancerInfo.phone}
                   onChange={(phone) => onUpdateFreelancerInfo?.({ phone })}
-                  className="h-auto border-none bg-transparent p-0 text-xs"
+                  className="h-auto w-full min-w-0 border-none bg-transparent p-0 text-xs"
                   placeholder="+54 11 5555 5555"
                 />
               </div>
             </div>
           </div>
 
-          <div className="sm:text-right">
+          <div className={cn("shrink-0", compact ? "text-left" : "sm:text-right")}>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               Presupuesto
             </p>
-            <p className="mt-1 text-sm font-semibold tabular text-foreground">{quoteNumber}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{currentDate}</p>
+            <p className="mt-1 whitespace-nowrap text-sm font-semibold tabular text-foreground">
+              {quoteNumber}
+            </p>
+            <p className="mt-1 whitespace-nowrap text-xs text-muted-foreground">{currentDate}</p>
           </div>
         </div>
 
@@ -223,31 +251,24 @@ export function ReceiptPreview({
 
         {/* Task breakdown */}
         <div className="mt-8 overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className={cn("w-full", compact ? "text-xs" : "text-sm")}>
             <thead>
               <tr className="border-b border-border">
                 <th
                   scope="col"
-                  className="py-3 pr-4 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground"
+                  className={cn(headCell, "text-left")}
                 >
                   Descripción
                 </th>
-                <th
-                  scope="col"
-                  className="py-3 text-right text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground"
-                >
+                <th scope="col" className={cn(headCell, "text-right")}>
                   Horas
                 </th>
-                <th
-                  scope="col"
-                  className="py-3 text-right text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground"
-                >
-                  Tarifa
-                </th>
-                <th
-                  scope="col"
-                  className="py-3 text-right text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground"
-                >
+                {compact ? null : (
+                  <th scope="col" className={cn(headCell, "text-right")}>
+                    Tarifa
+                  </th>
+                )}
+                <th scope="col" className={cn(headCell, "text-right")}>
                   Importe
                 </th>
               </tr>
@@ -255,12 +276,14 @@ export function ReceiptPreview({
             <tbody className="divide-y divide-border">
               {tasks.map((task) => (
                 <tr key={task.id}>
-                  <td className="py-3 pr-4 text-foreground">{task.description}</td>
-                  <td className="py-3 text-right tabular text-muted-foreground">{task.hours}</td>
-                  <td className="py-3 text-right tabular text-muted-foreground">
-                    {task.hours > 0 ? formatCurrency(task.cost / task.hours, currency) : "—"}
-                  </td>
-                  <td className="py-3 text-right font-semibold tabular text-foreground">
+                  <td className={cn(bodyCell, "text-foreground")}>{task.description}</td>
+                  <td className={numberCell}>{task.hours}</td>
+                  {compact ? null : (
+                    <td className={numberCell}>
+                      {task.hours > 0 ? formatCurrency(task.cost / task.hours, currency) : "—"}
+                    </td>
+                  )}
+                  <td className={cn(numberCell, "font-semibold text-foreground")}>
                     {formatCurrency(task.cost, currency)}
                   </td>
                 </tr>
