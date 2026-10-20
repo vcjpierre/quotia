@@ -47,7 +47,7 @@ export function Navigation() {
               </div>
               <div>
                 <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
-                  Calculadora Freelance
+                  Quotia
                 </h1>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   Facturación profesional sin complicaciones

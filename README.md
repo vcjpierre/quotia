@@ -1,8 +1,8 @@
-# Freelance Billing Calculator
+# Quotia
 
 ## Overview
 
-This is a modern full-stack freelance billing calculator application built with React, Express.js, and PostgreSQL. The application allows freelancers to create professional quotes, calculate project costs, and export PDF receipts. It features a clean, responsive UI built with shadcn/ui components and supports both light and dark themes.
+Quotia is a full-stack web app that helps freelancers turn hours and tasks into clear, professional quotes. Freelancers build an itemized quote, calculate project costs, share it with the client through a read-only link, and export it as a PDF receipt. It features a clean, responsive UI built with shadcn/ui components and supports both light and dark themes.
 
 ## System Architecture
 

@@ -1,5 +1,5 @@
 {
-  "name": "rest-express",
+  "name": "quotia",
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
@@ -116,12 +116,12 @@
     "esbuild@0.28.2": true,
     "core-js@3.43.0": true
   },
-  "description": "This is a modern full-stack freelance billing calculator application built with React, Express.js, and PostgreSQL. The application allows freelancers to create professional quotes, calculate project costs, and export PDF receipts. It features a clean, responsive UI built with shadcn/ui components and supports both light and dark themes.",
+  "description": "Quotia is a full-stack app that helps freelancers turn hours and tasks into clear, professional quotes, share them with clients through a read-only link, and export them as PDF receipts.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vcjpierre/Freelance-Billing-Calculator.git"
   },
-  "keywords": [],
+  "keywords": ["quotia", "freelance", "quotes", "billing", "pdf"],
   "bugs": {
     "url": "https://github.com/vcjpierre/Freelance-Billing-Calculator/issues"
   },

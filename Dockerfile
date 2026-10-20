@@ -1,4 +1,4 @@
-# Railway / container deployment for the Freelance Billing Calculator.
+# Railway / container deployment for Quotia.
 #
 # Single stage on purpose: the production server bundle (dist/index.js) statically
 # imports server/vite.ts, which imports vite.config.ts. Because the build script
