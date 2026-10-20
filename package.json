@@ -121,7 +121,13 @@
     "type": "git",
     "url": "git+https://github.com/vcjpierre/Freelance-Billing-Calculator.git"
   },
-  "keywords": ["quotia", "freelance", "quotes", "billing", "pdf"],
+  "keywords": [
+    "quotia",
+    "freelance",
+    "quotes",
+    "billing",
+    "pdf"
+  ],
   "bugs": {
     "url": "https://github.com/vcjpierre/Freelance-Billing-Calculator/issues"
   },
