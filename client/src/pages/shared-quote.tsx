@@ -9,13 +9,29 @@ import { exportToPDF } from "@/lib/pdf-export";
 import { type PublicQuote, type Task } from "@shared/schema";
 import { type Currency } from "@/lib/currency";
 
+const SHARE_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
+
+function readShareToken(legacyToken: string): { token: string; viaHeader: boolean } {
+  if (SHARE_TOKEN_PATTERN.test(legacyToken)) {
+    return { token: legacyToken, viaHeader: false };
+  }
+
+  const hashToken = window.location.hash.replace(/^#/, "");
+  if (SHARE_TOKEN_PATTERN.test(hashToken)) {
+    return { token: hashToken, viaHeader: true };
+  }
+
+  return { token: "", viaHeader: false };
+}
+
 /**
- * Public, read-only view of a quote. Reached with `/s/:token` and rendered
- * outside the auth shell: no navigation, no editing, no owner information.
+ * Public, read-only view of a quote. Reached with `/s#token` (the fragment never
+ * reaches the server) or the legacy `/s/:token`, and rendered outside the auth
+ * shell: no navigation, no editing, no owner information.
  */
 export default function SharedQuotePage() {
   const params = useParams<{ token?: string }>();
-  const token = params.token ?? "";
+  const { token, viaHeader } = readShareToken(params.token ?? "");
   const { toast } = useToast();
 
   const {
@@ -26,7 +42,12 @@ export default function SharedQuotePage() {
   } = useQuery<PublicQuote>({
     queryKey: [`/api/shared/${token}`],
     queryFn: async () => {
-      const response = await fetch(`/api/shared/${token}`);
+      const response = viaHeader
+        ? await fetch("/api/shared", {
+            headers: { "X-Share-Token": token },
+            cache: "no-store",
+          })
+        : await fetch(`/api/shared/${encodeURIComponent(token)}`, { cache: "no-store" });
 
       if (response.status === 404) {
         throw new Error("not-found");

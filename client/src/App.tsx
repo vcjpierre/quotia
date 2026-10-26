@@ -39,6 +39,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       {/* Public read-only quote: intentionally outside ProtectedRoute. */}
+      <Route path="/s" component={SharedQuote} />
       <Route path="/s/:token" component={SharedQuote} />
       <Route path="/quotes">
         {() => (

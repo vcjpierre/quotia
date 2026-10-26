@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { requireAuth } from "./auth";
@@ -21,6 +21,28 @@ function parseQuoteId(raw: string): number | null {
 // base64url of 32 random bytes: always 43 characters. Rejecting anything else
 // before touching the database keeps junk traffic off the public endpoint.
 const SHARE_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
+
+async function sendPublicQuote(token: string, res: Response): Promise<void> {
+  if (!SHARE_TOKEN_PATTERN.test(token)) {
+    res.status(404).json({ message: "Enlace no encontrado" });
+    return;
+  }
+
+  try {
+    const quote = await storage.getPublicQuoteByToken(token);
+    if (!quote) {
+      res.status(404).json({ message: "Enlace no encontrado o desactivado" });
+      return;
+    }
+
+    res.set("Cache-Control", "no-store");
+    res.set("X-Robots-Tag", "noindex, nofollow");
+    res.set("Referrer-Policy", "no-referrer");
+    res.json(quote);
+  } catch {
+    res.status(500).json({ message: "No se pudo obtener el presupuesto" });
+  }
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Every quote operation requires an authenticated owner.
@@ -177,28 +199,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Public read-only access. This route sits outside the /api/quotes auth mount on
-  // purpose: the unguessable token IS the credential. It must never return the
-  // owner id, and responses must not be cached or indexed by search engines.
+  // Public read-only access. These routes sit outside the /api/quotes auth mount
+  // on purpose: the unguessable token IS the credential. It must never return
+  // the owner id, and responses must not be cached or indexed by search engines.
+  //
+  // New links put the token in the URL fragment (never sent to the server), so
+  // the browser reads it and sends it in a header. The path variant stays for
+  // links created before that change.
+  app.get("/api/shared", async (req, res) => {
+    await sendPublicQuote(req.get("x-share-token") ?? "", res);
+  });
+
   app.get("/api/shared/:token", async (req, res) => {
-    const { token } = req.params;
-
-    if (!SHARE_TOKEN_PATTERN.test(token)) {
-      return res.status(404).json({ message: "Enlace no encontrado" });
-    }
-
-    try {
-      const quote = await storage.getPublicQuoteByToken(token);
-      if (!quote) {
-        return res.status(404).json({ message: "Enlace no encontrado o desactivado" });
-      }
-
-      res.set("Cache-Control", "no-store");
-      res.set("X-Robots-Tag", "noindex, nofollow");
-      res.json(quote);
-    } catch (error) {
-      res.status(500).json({ message: "No se pudo obtener el presupuesto" });
-    }
+    await sendPublicQuote(req.params.token, res);
   });
 
   const httpServer = createServer(app);

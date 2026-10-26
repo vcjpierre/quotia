@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync } from "node:fs";
 import net from "node:net";
+import { gzipSync } from "node:zlib";
 import { neon } from "@neondatabase/serverless";
 import { storage } from "../server/storage";
 import { type NewQuote, type PublicQuote, type Quote } from "../shared/schema";
@@ -273,18 +274,59 @@ describe("quote shares · HTTP", { skip: httpSkipReason }, () => {
     assert.equal(body.total, 123400);
   });
 
-  test("la página /s/:token sirve el shell y no se indexa ni filtra el referrer", async () => {
-    const response = await fetch(`${base}/s/${token}`);
+  test("la API pública acepta el token por header sin exponerlo en la URL", async () => {
+    const response = await fetch(`${base}/api/shared`, {
+      headers: { "x-share-token": token },
+    });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("cache-control"), "no-store");
+    assert.match(response.headers.get("x-robots-tag") ?? "", /noindex/);
+    const body = (await response.json()) as Record<string, unknown>;
+    assert.equal(body.total, 123400);
+  });
+
+  test("la API pública sin header o con token inválido devuelve 404", async () => {
+    assert.equal((await fetch(`${base}/api/shared`)).status, 404);
+    assert.equal(
+      (await fetch(`${base}/api/shared`, { headers: { "x-share-token": "short" } })).status,
+      404,
+    );
+  });
+
+  test("la página /s sirve el shell sin recibir el token y bloquea indexado/referrer", async () => {
+    const response = await fetch(`${base}/s`);
     assert.equal(response.status, 200);
     assert.match(await response.text(), /id="root"/);
     assert.match(response.headers.get("x-robots-tag") ?? "", /noindex/);
     assert.equal(response.headers.get("referrer-policy"), "no-referrer");
     assert.equal(response.headers.get("cache-control"), "no-store");
+    assert.equal(response.headers.get("x-frame-options"), "DENY");
+    assert.match(response.headers.get("content-security-policy") ?? "", /frame-ancestors 'none'/);
+    assert.match(response.headers.get("strict-transport-security") ?? "", /max-age=/);
+  });
+
+  test("la página /s/:token sigue funcionando para enlaces viejos", async () => {
+    const response = await fetch(`${base}/s/${token}`);
+    assert.equal(response.status, 200);
+    assert.match(await response.text(), /id="root"/);
+    assert.equal(response.headers.get("referrer-policy"), "no-referrer");
   });
 
   test("tokens desconocidos o malformados devuelven 404", async () => {
     assert.equal((await fetch(`${base}/api/shared/${"x".repeat(43)}`)).status, 404);
     assert.equal((await fetch(`${base}/api/shared/short`)).status, 404);
+  });
+
+  test("rechaza cuerpos comprimidos sin tumbar el proceso", async () => {
+    const body = gzipSync(Buffer.from(JSON.stringify({ title: "payload" })));
+    const response = await fetch(`${base}/api/quotes`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "content-encoding": "gzip" },
+      body,
+    });
+
+    assert.equal(response.status, 415);
+    assert.equal((await fetch(`${base}/s`)).status, 200);
   });
 
   test("los endpoints de gestión exigen autenticación", async () => {
@@ -295,6 +337,7 @@ describe("quote shares · HTTP", { skip: httpSkipReason }, () => {
 
   test("el token nunca aparece en los logs y la ruta se redacta", async () => {
     await fetch(`${base}/api/shared/${token}`);
+    await fetch(`${base}/api/shared`, { headers: { "x-share-token": token } });
     await sleep(400);
 
     assert.ok(!serverLog.includes(token), "el token quedó escrito en los logs");

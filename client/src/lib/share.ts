@@ -1,9 +1,11 @@
 /**
  * Public share links live outside the authenticated app: the token is the only
- * credential, so the URL must be stable and point at the read-only page.
+ * credential, so the URL must be stable and point at the read-only page. The
+ * token goes in the fragment because browsers never send it to the server,
+ * keeping it out of access logs.
  */
 export function buildShareUrl(token: string): string {
-  return `${window.location.origin}/s/${token}`;
+  return `${window.location.origin}/s#${token}`;
 }
 
 /**
